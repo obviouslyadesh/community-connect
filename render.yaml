@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: community-connect
+    env: python
+    plan: free
+    branch: main
+    buildCommand: |
+      pip install -r requirements.txt
+      python -c "from app import create_app, db; app = create_app(); app.app_context().push(); db.create_all()"
+    startCommand: gunicorn run:app
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: community-connect-db
+          property: connectionString
+      - key: WEATHER_API_KEY
+        value: "your-weather-api-key-optional"
+      - key: MAPS_API_KEY  
+        value: "your-maps-api-key-optional"
+
+databases:
+  - name: community-connect-db
+    plan: free
+    databaseName: community_connect
+    user: community_connect

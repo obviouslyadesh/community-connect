@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section text-center py-5 bg-light rounded">
+    <h1 class="display-4">Welcome to Community Connect</h1>
+    <p class="lead">Connecting volunteers with local community events</p>
+    
+    {% if not current_user.is_authenticated %}
+        <div class="mt-4">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg me-2">Get Started</a>
+            <a href="{{ url_for('main.events') }}" class="btn btn-outline-primary btn-lg">Browse Events</a>
+        </div>
+    {% else %}
+        <div class="mt-4">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg me-2">Go to Dashboard</a>
+            <a href="{{ url_for('main.events') }}" class="btn btn-outline-primary btn-lg">Browse Events</a>
+        </div>
+    {% endif %}
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">For Volunteers</h5>
+                <p class="card-text">Find meaningful volunteer opportunities in your community and make a difference.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">For Organizations</h5>
+                <p class="card-text">Connect with passionate volunteers and manage your events efficiently.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Real-time Updates</h5>
+                <p class="card-text">Get weather forecasts and location maps for all your events.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

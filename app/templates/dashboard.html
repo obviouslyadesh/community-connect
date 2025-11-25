@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Community Connect{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>My Dashboard</h2>
+    {% if current_user.user_type == 'organization' %}
+        <a href="{{ url_for('main.create_event') }}" class="btn btn-primary">Create New Event</a>
+    {% endif %}
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="card-title">
+                    {{ events|length }}
+                </h3>
+                <p class="card-text">
+                    {% if current_user.user_type == 'organization' %}
+                        My Events
+                    {% else %}
+                        My Signups
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="card-title text-success">
+                    {% set current_time = now %}
+                    {{ events|selectattr('date', 'ge', current_time)|list|length }}
+                </h3>
+                <p class="card-text">Upcoming</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="card-title text-warning">
+                    {% set current_time = now %}
+                    {{ events|selectattr('date', 'lt', current_time)|list|length }}
+                </h3>
+                <p class="card-text">Past</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if current_user.user_type == 'organization' %}
+    <!-- Organization Dashboard -->
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title mb-0">My Events</h4>
+        </div>
+        <div class="card-body">
+            {% if events %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Event Title</th>
+                                <th>Date & Time</th>
+                                <th>Location</th>
+                                <th>Volunteers</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in events %}
+                            <tr>
+                                <td>
+                                    <strong>{{ event.title }}</strong>
+                                </td>
+                                <td>{{ event.date.strftime('%m/%d/%Y %I:%M %p') }}</td>
+                                <td>{{ event.city }}, {{ event.state }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if event.volunteers_count() > 0 else 'secondary' }}">
+                                        {{ event.volunteers_count() }}/{{ event.max_volunteers }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if event.date > now %}
+                                        <span class="badge bg-success">Upcoming</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Completed</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('main.event_detail', event_id=event.id) }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <h5>No events created yet</h5>
+                    <p class="text-muted">Create your first event to start connecting with volunteers!</p>
+                    <a href="{{ url_for('main.create_event') }}" class="btn btn-primary">Create Your First Event</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% else %}
+    <!-- Volunteer Dashboard -->
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title mb-0">My Volunteer Signups</h4>
+        </div>
+        <div class="card-body">
+            {% if events %}
+                <div class="row">
+                    {% for event in events %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ event.title }}</h5>
+                                <p class="card-text">{{ event.description[:100] }}...</p>
+                                <p class="text-muted">
+                                    <strong>Date:</strong> {{ event.date.strftime('%B %d, %Y at %I:%M %p') }}<br>
+                                    <strong>Location:</strong> {{ event.city }}, {{ event.state }}<br>
+                                    <strong>Organizer:</strong> {{ event.organizer.username }}
+                                </p>
+                                
+                                {% if event.date > now %}
+                                    <span class="badge bg-success">Upcoming</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Completed</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <a href="{{ url_for('main.event_detail', event_id=event.id) }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                                {% if event.date > now %}
+                                    <button class="btn btn-sm btn-outline-warning cancel-signup-btn" data-event-id="{{ event.id }}">Cancel Signup</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <h5>No event signups yet</h5>
+                    <p class="text-muted">Browse events and sign up to start volunteering!</p>
+                    <a href="{{ url_for('main.events') }}" class="btn btn-primary">Browse Events</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Browse All Events</h5>
+                <p class="text-muted">Discover new volunteer opportunities in your community</p>
+                <a href="{{ url_for('main.events') }}" class="btn btn-outline-primary">View Events</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Account Settings</h5>
+                <p class="text-muted">Update your profile and preferences</p>
+                <button class="btn btn-outline-secondary" disabled>Coming Soon</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Volunteer signup cancellation function
+async function cancelVolunteerSignup(eventId) {
+    if (!confirm('Are you sure you want to cancel your volunteer signup for this event?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/events/${eventId}/volunteer`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('Successfully canceled your volunteer signup!');
+            location.reload(); // Refresh the page to show updated list
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error canceling volunteer signup. Please try again.');
+        console.error('Error:', error);
+    }
+}
+
+// Event listener for cancel buttons (using data attributes)
+document.addEventListener('DOMContentLoaded', function() {
+    const cancelButtons = document.querySelectorAll('.cancel-signup-btn');
+    cancelButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const eventId = this.getAttribute('data-event-id');
+            cancelVolunteerSignup(eventId);
+        });
+    });
+});
+</script>
+{% endblock %}

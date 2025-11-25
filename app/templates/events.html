@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Upcoming Events</h2>
+    {% if current_user.is_authenticated and current_user.user_type == 'organization' %}
+        <a href="{{ url_for('main.create_event') }}" class="btn btn-primary">Create New Event</a>
+    {% endif %}
+</div>
+
+<div class="row">
+    {% for event in events.items %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ event.title }}</h5>
+                <p class="card-text">{{ event.description[:100] }}...</p>
+                <p class="text-muted">
+                    <strong>Date:</strong> {{ event.date.strftime('%B %d, %Y at %I:%M %p') }}<br>
+                    <strong>Location:</strong> {{ event.city }}, {{ event.state }}<br>
+                    <strong>Volunteers:</strong> {{ event.volunteers_count() }}/{{ event.max_volunteers }}
+                </p>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('main.event_detail', event_id=event.id) }}" class="btn btn-outline-primary btn-sm">View Details</a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">No upcoming events found.</div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if events.pages > 1 %}
+<nav aria-label="Event pagination">
+    <ul class="pagination justify-content-center">
+        {% for page_num in events.iter_pages() %}
+            <li class="page-item {% if page_num == events.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('main.events', page=page_num) }}">{{ page_num }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

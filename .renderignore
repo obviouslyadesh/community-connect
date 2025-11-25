@@ -1,0 +1,13 @@
+*.pyc
+__pycache__/
+instance/
+*.db
+.env
+*.log
+.DS_Store
+*.sqlite3
+test/
+tests/
+.coverage
+htmlcov/
+.pytest_cache/
