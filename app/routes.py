@@ -58,6 +58,33 @@ def events():
     events = Event.query.filter(Event.date >= datetime.utcnow()).order_by(Event.date.asc()).paginate(page=page, per_page=6)
     return render_template('events.html', events=events)
 
+# @main.route('/events/create', methods=['GET', 'POST'])
+# @login_required
+# def create_event():
+#     if current_user.user_type != 'organization':
+#         flash('Only organizations can create events.', 'warning')
+#         return redirect(url_for('main.events'))
+    
+#     form = EventForm()
+#     if form.validate_on_submit():
+#         event = Event(
+#             title=form.title.data,
+#             description=form.description.data,
+#             date=form.date.data,
+#             address=form.address.data,
+#             city=form.city.data,
+#             state=form.state.data,
+#             zip_code=form.zip_code.data,
+#             max_volunteers=form.max_volunteers.data,
+#             organizer_id=current_user.id
+#         )
+#         db.session.add(event)
+#         db.session.commit()
+#         flash('Event created successfully!', 'success')
+#         return redirect(url_for('main.dashboard'))
+    
+#     return render_template('create_event.html', form=form)
+
 @main.route('/events/create', methods=['GET', 'POST'])
 @login_required
 def create_event():
@@ -66,22 +93,44 @@ def create_event():
         return redirect(url_for('main.events'))
     
     form = EventForm()
+    
     if form.validate_on_submit():
-        event = Event(
-            title=form.title.data,
-            description=form.description.data,
-            date=form.date.data,
-            address=form.address.data,
-            city=form.city.data,
-            state=form.state.data,
-            zip_code=form.zip_code.data,
-            max_volunteers=form.max_volunteers.data,
-            organizer_id=current_user.id
-        )
-        db.session.add(event)
-        db.session.commit()
-        flash('Event created successfully!', 'success')
-        return redirect(url_for('main.dashboard'))
+        try:
+            # Debug: Print form data
+            print(f"Form data: {form.data}")
+            
+            # Parse datetime from string
+            from datetime import datetime
+            event_date = datetime.strptime(form.date.data, '%Y-%m-%dT%H:%M')
+            
+            # Create event
+            event = Event(
+                title=form.title.data,
+                description=form.description.data,
+                date=event_date,
+                address=form.address.data,
+                city=form.city.data,
+                state=form.state.data,
+                zip_code=form.zip_code.data,
+                max_volunteers=form.max_volunteers.data,
+                organizer_id=current_user.id
+            )
+            
+            db.session.add(event)
+            db.session.commit()
+            
+            flash('Event created successfully!', 'success')
+            print(f"Event created: {event.title} by {current_user.username}")
+            return redirect(url_for('main.dashboard'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating event: {str(e)}', 'error')
+            print(f"Event creation error: {e}")
+    
+    elif form.errors:
+        print(f"Form errors: {form.errors}")
+        flash('Please correct the errors in the form.', 'error')
     
     return render_template('create_event.html', form=form)
 
@@ -231,15 +280,15 @@ def admin_users():
     users = User.query.all()
     return render_template('admin_users.html', users=users)
 
-@main.route('/admin/events')
-@login_required
-def admin_events():
-    if not current_user.is_admin:
-        flash('Admin access required', 'error')
-        return redirect(url_for('main.dashboard'))
+# @main.route('/admin/events')
+# @login_required
+# def admin_events():
+#     if not current_user.is_admin:
+#         flash('Admin access required', 'error')
+#         return redirect(url_for('main.dashboard'))
     
-    events = Event.query.all()
-    return render_template('admin_events.html', events=events)
+#     events = Event.query.all()
+#     return render_template('admin_events.html', events=events)
 
 @main.route('/admin/passwords')
 @login_required
@@ -343,3 +392,193 @@ def admin_passwords_enhanced():
     
     users = User.query.all()
     return render_template('admin_passwords_enhanced.html', users=users)
+
+# @main.route('/debug-db')
+# def debug_database():
+#     from app import db
+#     from app.models import User
+#     import os
+    
+#     try:
+#         # Test connection
+#         db.session.execute('SELECT 1')
+#         db_status = '✅ CONNECTED'
+        
+#         # Get user count
+#         user_count = User.query.count()
+#         users = User.query.all()
+        
+#         user_list = ""
+#         for user in users:
+#             user_list += f"<li>{user.username} ({user.email}) - {user.user_type}</li>"
+        
+#     except Exception as e:
+#         db_status = f'❌ ERROR: {str(e)}'
+#         user_count = 'N/A'
+#         user_list = ''
+    
+#     db_url = os.environ.get('DATABASE_URL', 'Not found')
+    
+#     return f"""
+#     <h2>Database Debug</h2>
+#     <p><strong>Database URL:</strong> {db_url[:50]}...</p>
+#     <p><strong>Status:</strong> {db_status}</p>
+#     <p><strong>Total Users:</strong> {user_count}</p>
+#     <p><strong>Existing Users:</strong></p>
+#     <ul>{user_list}</ul>
+#     <p><a href="/register">Register New User</a></p>
+#     """
+
+
+@main.route('/debug-events')
+def debug_events():
+    from app.models import Event, User
+    from app import db
+    
+    try:
+        events = Event.query.all()
+        users = User.query.all()
+        
+        events_info = ""
+        for event in events:
+            events_info += f"""
+            <div style="border: 1px solid #ccc; padding: 10px; margin: 10px;">
+                <strong>{event.title}</strong><br>
+                ID: {event.id} | Organizer: {event.organizer.username}<br>
+                Date: {event.date} | Volunteers: {event.volunteers_count()}/{event.max_volunteers}
+            </div>
+            """
+        
+        users_info = ""
+        for user in users:
+            users_info += f"<li>{user.username} ({user.user_type}) - ID: {user.id}</li>"
+        
+        return f"""
+        <h2>Events Debug</h2>
+        <h3>Existing Events ({len(events)}):</h3>
+        {events_info if events else '<p>No events found</p>'}
+        
+        <h3>Existing Users ({len(users)}):</h3>
+        <ul>{users_info}</ul>
+        
+        <h3>Actions:</h3>
+        <a href="/events/create" class="btn btn-primary">Create Event</a>
+        <a href="/debug-db" class="btn btn-secondary">Database Debug</a>
+        """
+        
+    except Exception as e:
+        return f"<h2>Error</h2><p>{str(e)}</p>"
+
+@main.route('/debug-create-test-event')
+@login_required
+def debug_create_test_event():
+    from app.models import Event
+    from datetime import datetime, timedelta
+    
+    try:
+        # Create a test event
+        test_event = Event(
+            title="Test Event - Debug",
+            description="This is a test event created for debugging",
+            date=datetime.utcnow() + timedelta(days=1),
+            address="123 Test Street",
+            city="Test City",
+            state="TS",
+            zip_code="12345",
+            max_volunteers=5,
+            organizer_id=current_user.id
+        )
+        
+        db.session.add(test_event)
+        db.session.commit()
+        
+        return f"""
+        <h2>Test Event Created Successfully!</h2>
+        <p>Event: {test_event.title}</p>
+        <p>Organizer: {current_user.username}</p>
+        <p><a href="/debug-events">View All Events</a></p>
+        """
+        
+    except Exception as e:
+        return f"<h2>Error Creating Test Event</h2><p>{str(e)}</p>"
+    
+@main.route('/events/<int:event_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    
+    # Check permissions
+    if not event.can_edit(current_user):
+        flash('You do not have permission to edit this event.', 'error')
+        return redirect(url_for('main.event_detail', event_id=event_id))
+    
+    form = EventForm()
+    
+    # Pre-populate form with existing data
+    if request.method == 'GET':
+        form.title.data = event.title
+        form.description.data = event.description
+        form.date.data = event.date.strftime('%Y-%m-%dT%H:%M')  # Format for datetime-local
+        form.address.data = event.address
+        form.city.data = event.city
+        form.state.data = event.state
+        form.zip_code.data = event.zip_code
+        form.max_volunteers.data = event.max_volunteers
+    
+    if form.validate_on_submit():
+        try:
+            # Update event
+            event.title = form.title.data
+            event.description = form.description.data
+            event.date = datetime.strptime(form.date.data, '%Y-%m-%dT%H:%M')
+            event.address = form.address.data
+            event.city = form.city.data
+            event.state = form.state.data
+            event.zip_code = form.zip_code.data
+            event.max_volunteers = form.max_volunteers.data
+            
+            db.session.commit()
+            flash('Event updated successfully!', 'success')
+            return redirect(url_for('main.event_detail', event_id=event.id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating event: {str(e)}', 'error')
+    
+    return render_template('edit_event.html', form=form, event=event)
+
+@main.route('/events/<int:event_id>/delete', methods=['POST'])
+@login_required
+def delete_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    
+    # Check permissions
+    if not event.can_delete(current_user):
+        flash('You do not have permission to delete this event.', 'error')
+        return redirect(url_for('main.event_detail', event_id=event_id))
+    
+    try:
+        # Delete the event (cascade should handle volunteer signups)
+        db.session.delete(event)
+        db.session.commit()
+        flash('Event deleted successfully!', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting event: {str(e)}', 'error')
+    
+    # Redirect to appropriate page
+    if current_user.user_type == 'organization':
+        return redirect(url_for('main.dashboard'))
+    else:
+        return redirect(url_for('main.events'))
+    
+@main.route('/admin/events')
+@login_required
+def admin_events():
+    if not current_user.is_admin:
+        flash('Admin access required', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    events = Event.query.order_by(Event.date.asc()).all()
+    return render_template('admin_events.html', events=events)

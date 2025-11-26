@@ -26,10 +26,25 @@ class RegistrationForm(FlaskForm):
         if user:
             raise ValidationError('Email already registered. Please use a different one.')
 
+# class EventForm(FlaskForm):
+#     title = StringField('Event Title', validators=[DataRequired(), Length(max=200)])
+#     description = TextAreaField('Description', validators=[DataRequired()])
+#     date = DateTimeField('Event Date', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
+#     address = StringField('Address', validators=[DataRequired(), Length(max=300)])
+#     city = StringField('City', validators=[DataRequired(), Length(max=100)])
+#     state = StringField('State', validators=[DataRequired(), Length(max=100)])
+#     zip_code = StringField('ZIP Code', validators=[DataRequired(), Length(max=20)])
+#     max_volunteers = IntegerField('Maximum Volunteers', default=10, validators=[DataRequired()])
+#     submit = SubmitField('Create Event')
+
+
 class EventForm(FlaskForm):
     title = StringField('Event Title', validators=[DataRequired(), Length(max=200)])
     description = TextAreaField('Description', validators=[DataRequired()])
-    date = DateTimeField('Event Date', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
+    
+    # Fix: Use StringField for datetime and parse manually
+    date = StringField('Event Date & Time', validators=[DataRequired()])
+    
     address = StringField('Address', validators=[DataRequired(), Length(max=300)])
     city = StringField('City', validators=[DataRequired(), Length(max=100)])
     state = StringField('State', validators=[DataRequired(), Length(max=100)])

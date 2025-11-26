@@ -39,35 +39,44 @@ db = SQLAlchemy()
 #             'first_event': min([s.signed_up_at for s in signups]) if signups else None
         # }
 
-class Event(db.Model):
-    __tablename__ = 'event'
-    __table_args__ = {'extend_existing': True}  # ADD THIS LINE
+# class Event(db.Model):
+#     __tablename__ = 'event'
+#     __table_args__ = {'extend_existing': True}  # ADD THIS LINE
     
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    date = db.Column(db.DateTime, nullable=False)
-    address = db.Column(db.String(300), nullable=False)
-    city = db.Column(db.String(100), nullable=False)
-    state = db.Column(db.String(100), nullable=False)
-    zip_code = db.Column(db.String(20), nullable=False)
-    max_volunteers = db.Column(db.Integer, default=10)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+#     id = db.Column(db.Integer, primary_key=True)
+#     title = db.Column(db.String(200), nullable=False)
+#     description = db.Column(db.Text, nullable=False)
+#     date = db.Column(db.DateTime, nullable=False)
+#     address = db.Column(db.String(300), nullable=False)
+#     city = db.Column(db.String(100), nullable=False)
+#     state = db.Column(db.String(100), nullable=False)
+#     zip_code = db.Column(db.String(20), nullable=False)
+#     max_volunteers = db.Column(db.Integer, default=10)
+#     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Foreign Keys
-    organizer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+#     # Foreign Keys
+#     organizer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
-    # Relationships
-    volunteers = db.relationship('EventVolunteer', backref='event', lazy=True, cascade='all, delete-orphan')
+#     # Relationships
+#     volunteers = db.relationship('EventVolunteer', backref='event', lazy=True, cascade='all, delete-orphan')
     
-    def get_full_address(self):
-        return f"{self.address}, {self.city}, {self.state} {self.zip_code}"
+#     def get_full_address(self):
+#         return f"{self.address}, {self.city}, {self.state} {self.zip_code}"
     
-    def volunteers_count(self):
-        return len(self.volunteers)
+#     def volunteers_count(self):
+#         return len(self.volunteers)
     
-    def spots_remaining(self):
-        return self.max_volunteers - self.volunteers_count()
+#     def spots_remaining(self):
+#         return self.max_volunteers - self.volunteers_count()
+    
+# #edit and delete option
+#     def can_edit(self, user):
+#         """Check if user can edit this event"""
+#         return user.is_authenticated and (user.id == self.organizer_id or user.is_admin)
+    
+#     def can_delete(self, user):
+#         """Check if user can delete this event"""
+#         return user.is_authenticated and (user.id == self.organizer_id or user.is_admin)
 
 class EventVolunteer(db.Model):
     __tablename__ = 'event_volunteer'
@@ -133,3 +142,45 @@ class User(UserMixin, db.Model):
             'upcoming_events': len(signups) - len(completed_events),
             'first_event': min([s.signed_up_at for s in signups]) if signups else None
         }
+class Event(db.Model):
+    __tablename__ = 'event'
+    __table_args__ = {'extend_existing': True}
+    
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    address = db.Column(db.String(300), nullable=False)
+    city = db.Column(db.String(100), nullable=False)
+    state = db.Column(db.String(100), nullable=False)
+    zip_code = db.Column(db.String(20), nullable=False)
+    max_volunteers = db.Column(db.Integer, default=10)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Foreign Keys
+    organizer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relationships
+    volunteers = db.relationship('EventVolunteer', backref='event', lazy=True, cascade='all, delete-orphan')
+    
+    def get_full_address(self):
+        return f"{self.address}, {self.city}, {self.state} {self.zip_code}"
+    
+    def volunteers_count(self):
+        return len(self.volunteers)
+    
+    def spots_remaining(self):
+        return self.max_volunteers - self.volunteers_count()
+    
+    # ADD THESE METHODS:
+    def can_edit(self, user):
+        """Check if user can edit this event"""
+        if not user.is_authenticated:
+            return False
+        return user.id == self.organizer_id or user.is_admin
+    
+    def can_delete(self, user):
+        """Check if user can delete this event"""
+        if not user.is_authenticated:
+            return False
+        return user.id == self.organizer_id or user.is_admin

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Event Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-calendar me-2"></i>Event Management
+        </h1>
+        <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">All Events ({{ events|length }})</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Organizer</th>
+                            <th>Date</th>
+                            <th>Location</th>
+                            <th>Volunteers</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in events %}
+                        <tr>
+                            <td>{{ event.id }}</td>
+                            <td>
+                                <strong>{{ event.title }}</strong>
+                            </td>
+                            <td>{{ event.organizer.username }}</td>
+                            <td>{{ event.date.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ event.city }}, {{ event.state }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if event.volunteers_count() > 0 else 'secondary' }}">
+                                    {{ event.volunteers_count() }}/{{ event.max_volunteers }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('main.event_detail', event_id=event.id) }}" 
+                                       class="btn btn-outline-primary">View</a>
+                                    <a href="{{ url_for('main.edit_event', event_id=event.id) }}" 
+                                       class="btn btn-outline-warning">Edit</a>
+                                    <form action="{{ url_for('main.delete_event', event_id=event.id) }}" 
+                                          method="POST" 
+                                          class="d-inline"
+                                          onsubmit="return confirm('Delete event: {{ event.title }}?');">
+                                        <button type="submit" class="btn btn-outline-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
