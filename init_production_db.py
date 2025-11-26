@@ -1,88 +1,101 @@
-#!/usr/bin/env python3
-"""
-Script to initialize production database with sample data
-"""
-
 from app import create_app, db
-from app.models import User, Event, EventVolunteer
+from app.models import User, Event
 from datetime import datetime, timedelta
+import os
 
-def init_production_data():
+def initialize_production():
     app = create_app()
     
     with app.app_context():
-        print("🚀 Initializing production database...")
+        print("🚀 Production Database Initialization Starting...")
         
-        # Check if users already exist
-        if User.query.count() == 0:
-            print("👥 Creating sample users...")
+        try:
+            # Test database connection
+            db.session.execute('SELECT 1')
+            print("✅ Database connection successful")
             
-            # Admin organization
-            org = User(
-                username='sample_org',
-                email='org@example.com', 
-                user_type='organization',
-                is_admin=True
-            )
-            org.set_password('password123')
-            db.session.add(org)
+            # Create all tables
+            db.create_all()
+            print("✅ Database tables created/verified")
             
-            # Volunteer
-            volunteer = User(
-                username='sample_volunteer',
-                email='volunteer@example.com',
-                user_type='volunteer'
-            )
-            volunteer.set_password('password123')
-            db.session.add(volunteer)
+            # Create essential users if they don't exist
+            users_created = 0
+            
+            # Admin User
+            if not User.query.filter_by(username='admin').first():
+                admin = User(
+                    username='admin',
+                    email='admin@community.com',
+                    user_type='organization',
+                    is_admin=True
+                )
+                admin.set_password('Admin123!')
+                db.session.add(admin)
+                users_created += 1
+                print("✅ Created admin: admin / Admin123!")
+            
+            # Organization User
+            if not User.query.filter_by(username='organization').first():
+                org = User(
+                    username='organization',
+                    email='org@community.com',
+                    user_type='organization',
+                    is_admin=False
+                )
+                org.set_password('Org123!')
+                db.session.add(org)
+                users_created += 1
+                print("✅ Created organization: organization / Org123!")
+            
+            # Volunteer User
+            if not User.query.filter_by(username='volunteer').first():
+                volunteer = User(
+                    username='volunteer',
+                    email='volunteer@community.com',
+                    user_type='volunteer'
+                )
+                volunteer.set_password('Volunteer123!')
+                db.session.add(volunteer)
+                users_created += 1
+                print("✅ Created volunteer: volunteer / Volunteer123!")
+            
+            # Create sample event if no events exist
+            if Event.query.count() == 0 and User.query.filter_by(user_type='organization').first():
+                sample_event = Event(
+                    title="Community Park Cleanup",
+                    description="Join us for a community park cleanup day! We'll be picking up trash, planting flowers, and making our park beautiful.",
+                    date=datetime.utcnow() + timedelta(days=7),
+                    address="123 Main Street",
+                    city="Springfield",
+                    state="IL",
+                    zip_code="62701",
+                    max_volunteers=15,
+                    organizer_id=1  # First organization user
+                )
+                db.session.add(sample_event)
+                print("✅ Created sample event: Community Park Cleanup")
             
             db.session.commit()
-            print("✅ Sample users created")
             
-            # Create sample events
-            print("📅 Creating sample events...")
+            # Final report
+            total_users = User.query.count()
+            total_events = Event.query.count()
             
-            event1 = Event(
-                title="Community Park Cleanup",
-                description="Join us for a community park cleanup day! We'll be picking up trash, planting flowers, and making our park beautiful.",
-                date=datetime.utcnow() + timedelta(days=7),
-                address="123 Main Street",
-                city="Springfield",
-                state="IL", 
-                zip_code="62701",
-                max_volunteers=15,
-                organizer_id=1
-            )
-            db.session.add(event1)
+            print(f"\n🎉 Initialization Complete!")
+            print(f"📊 Database Status:")
+            print(f"   👥 Total Users: {total_users}")
+            print(f"   📅 Total Events: {total_events}")
+            print(f"   ✅ Users Created: {users_created}")
             
-            event2 = Event(
-                title="Food Bank Volunteer Day", 
-                description="Help sort and package food donations for local families in need. No experience necessary!",
-                date=datetime.utcnow() + timedelta(days=14),
-                address="456 Oak Avenue",
-                city="Springfield",
-                state="IL",
-                zip_code="62702", 
-                max_volunteers=10,
-                organizer_id=1
-            )
-            db.session.add(event2)
+            print(f"\n🔑 Always-Available Accounts:")
+            print("   Admin: admin / Admin123!")
+            print("   Organization: organization / Org123!") 
+            print("   Volunteer: volunteer / Volunteer123!")
             
-            db.session.commit()
-            print("✅ Sample events created")
-            
-        else:
-            print("ℹ️  Database already has data, skipping sample data creation")
-        
-        # Show final counts
-        users = User.query.count()
-        events = Event.query.count()
-        print(f"\n📊 Production Database Ready:")
-        print(f"   👥 Users: {users}")
-        print(f"   📅 Events: {events}")
-        print(f"\n🔑 Demo Accounts:")
-        print(f"   Admin: sample_org / password123")
-        print(f"   Volunteer: sample_volunteer / password123")
+        except Exception as e:
+            print(f"❌ Initialization error: {e}")
+            # Don't exit - let the app start anyway
+            print("⚠️  Continuing with application startup...")
 
 if __name__ == '__main__':
-    init_production_data()
+    initialize_production()

@@ -3,10 +3,11 @@ services:
     name: community-connect
     env: python
     plan: free
+    region: ohio
     branch: main
     buildCommand: |
       pip install -r requirements.txt
-      python -c "from app import create_app, db; app = create_app(); app.app_context().push(); db.create_all()"
+      python init_production_db.py
     startCommand: gunicorn run:app
     envVars:
       - key: SECRET_KEY
@@ -16,12 +17,15 @@ services:
           name: community-connect-db
           property: connectionString
       - key: WEATHER_API_KEY
-        value: "your-weather-api-key-optional"
-      - key: MAPS_API_KEY  
-        value: "your-maps-api-key-optional"
+        value: "demo-weather-key"
+      - key: MAPS_API_KEY
+        value: "demo-maps-key"
+      - key: DEVELOPER_MODE
+        value: "false"
 
 databases:
   - name: community-connect-db
     plan: free
+    region: Singapore
     databaseName: community_connect
     user: community_connect

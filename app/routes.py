@@ -582,3 +582,42 @@ def admin_events():
     
     events = Event.query.order_by(Event.date.asc()).all()
     return render_template('admin_events.html', events=events)
+
+@main.route('/debug-users')
+def debug_users():
+    from app.models import User
+    from app import db
+    
+    try:
+        users = User.query.all()
+        user_list = ""
+        for user in users:
+            admin_status = " (ADMIN)" if user.is_admin else ""
+            user_list += f"<li>{user.username}{admin_status} - {user.email} - {user.user_type}</li>"
+        
+        return f"""
+        <h2>Current Users in Database</h2>
+        <ul>{user_list if users else 'No users found'}</ul>
+        <p><a href="/register">Register New User</a></p>
+        <p><a href="/debug-db">Database Info</a></p>
+        """
+    except Exception as e:
+        return f"<h2>Error</h2><p>{str(e)}</p>"
+    
+@main.route('/reset-user-password/<username>/<new_password>')
+def reset_user_password(username, new_password):
+    """Emergency password reset (use carefully!)"""
+    from app.models import User
+    
+    # Simple security - change this key
+    secret_key = request.args.get('key', '')
+    if secret_key != 'emergency2024':
+        return "Invalid access", 403
+    
+    user = User.query.filter_by(username=username).first()
+    if user:
+        user.set_password(new_password)
+        db.session.commit()
+        return f"✅ Password reset for {username} to: {new_password}"
+    else:
+        return f"❌ User {username} not found"

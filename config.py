@@ -4,13 +4,14 @@ from datetime import timedelta
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
     
-    # Database configuration - Render provides DATABASE_URL
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///community_connect.db')
+    # Database configuration
+    database_url = os.environ.get('DATABASE_URL', 'sqlite:///community_connect.db')
     
-    # Fix for PostgreSQL (Render uses PostgreSQL)
-    if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith("postgres://"):
-        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace("postgres://", "postgresql://", 1)
+    # Fix for Render's PostgreSQL URL format
+    if database_url and database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
     
+    SQLALCHEMY_DATABASE_URI = database_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Session settings
@@ -21,4 +22,4 @@ class Config:
     MAPS_API_KEY = os.environ.get('MAPS_API_KEY', 'demo-key')
     
     # Developer Mode - ALWAYS FALSE IN PRODUCTION
-    DEVELOPER_MODE = False
+    DEVELOPER_MODE = os.environ.get('DEVELOPER_MODE', 'false').lower() == 'true'
