@@ -2,6 +2,7 @@ from app import create_app, db
 from app.models import User, Event
 from datetime import datetime, timedelta
 import os
+from sqlalchemy import text  # Add this import
 
 def initialize_production():
     app = create_app()
@@ -10,8 +11,8 @@ def initialize_production():
         print("🚀 Production Database Initialization Starting...")
         
         try:
-            # Test database connection
-            db.session.execute('SELECT 1')
+            # Test database connection - FIXED
+            db.session.execute(text('SELECT 1'))
             print("✅ Database connection successful")
             
             # Create all tables
