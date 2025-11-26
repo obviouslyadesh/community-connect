@@ -3,7 +3,6 @@ services:
     name: community-connect
     env: python
     plan: free
-    region: ohio
     branch: main
     buildCommand: |
       pip install -r requirements.txt
@@ -26,6 +25,5 @@ services:
 databases:
   - name: community-connect-db
     plan: free
-    region: ohio
     databaseName: community_connect
     user: community_connect

@@ -59,42 +59,25 @@ def initialize_production():
                 users_created += 1
                 print("✅ Created volunteer: volunteer / Volunteer123!")
             
-            # Create sample event if no events exist
-            if Event.query.count() == 0 and User.query.filter_by(user_type='organization').first():
-                sample_event = Event(
-                    title="Community Park Cleanup",
-                    description="Join us for a community park cleanup day! We'll be picking up trash, planting flowers, and making our park beautiful.",
-                    date=datetime.utcnow() + timedelta(days=7),
-                    address="123 Main Street",
-                    city="Springfield",
-                    state="IL",
-                    zip_code="62701",
-                    max_volunteers=15,
-                    organizer_id=1  # First organization user
-                )
-                db.session.add(sample_event)
-                print("✅ Created sample event: Community Park Cleanup")
-            
             db.session.commit()
             
             # Final report
             total_users = User.query.count()
             total_events = Event.query.count()
             
-            print(f"\n🎉 Initialization Complete!")
+            print(f"\n🎉 Production Initialization Complete!")
             print(f"📊 Database Status:")
             print(f"   👥 Total Users: {total_users}")
             print(f"   📅 Total Events: {total_events}")
             print(f"   ✅ Users Created: {users_created}")
             
-            print(f"\n🔑 Always-Available Accounts:")
+            print(f"\n🔑 Login Credentials:")
             print("   Admin: admin / Admin123!")
             print("   Organization: organization / Org123!") 
             print("   Volunteer: volunteer / Volunteer123!")
             
         except Exception as e:
             print(f"❌ Initialization error: {e}")
-            # Don't exit - let the app start anyway
             print("⚠️  Continuing with application startup...")
 
 if __name__ == '__main__':
