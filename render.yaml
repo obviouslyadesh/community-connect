@@ -26,6 +26,6 @@ services:
 databases:
   - name: community-connect-db
     plan: free
-    region: Singapore
+    region: ohio
     databaseName: community_connect
     user: community_connect
