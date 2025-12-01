@@ -1,8 +1,12 @@
 {% extends "base.html" %}
 
+{% block title %}Create New Event{% endblock %}
+
 {% block content %}
 <div class="container">
-    <h2>Create New Event</h2>
+    <h2 class="mb-4">
+        <i class="fas fa-plus-circle me-2"></i>Create New Event
+    </h2>
     
     <!-- Debug: Show form errors -->
     {% if form.errors %}
@@ -16,69 +20,168 @@
     </div>
     {% endif %}
 
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        
-        <div class="mb-3">
-            {{ form.title.label(class="form-label") }}
-            {{ form.title(class="form-control") }}
-            {% if form.title.errors %}
-                <div class="text-danger">
-                    {% for error in form.title.errors %}
-                        <small>{{ error }}</small>
-                    {% endfor %}
+    <div class="card shadow">
+        <div class="card-body">
+            <form method="POST" id="eventForm" onsubmit="return validateEventForm()">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    {{ form.title.label(class="form-label fw-bold") }}
+                    {{ form.title(class="form-control", placeholder="Enter event title") }}
+                    <div class="form-text">Give your event a clear, descriptive title</div>
+                    {% if form.title.errors %}
+                        <div class="text-danger">
+                            {% for error in form.title.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
-            {% endif %}
-        </div>
 
-        <div class="mb-3">
-            {{ form.description.label(class="form-label") }}
-            {{ form.description(class="form-control", rows="4") }}
-        </div>
+                <div class="mb-3">
+                    {{ form.description.label(class="form-label fw-bold") }}
+                    {{ form.description(class="form-control", rows="4", placeholder="Describe your event in detail...") }}
+                    <div class="form-text">Include what volunteers will do, what to bring, etc.</div>
+                </div>
 
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                {{ form.date.label(class="form-label") }}
-                {{ form.date(class="form-control", type="datetime-local") }}
-                {% if form.date.errors %}
-                    <div class="text-danger">
-                        {% for error in form.date.errors %}
-                            <small>{{ error }}</small>
-                        {% endfor %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.date.label(class="form-label fw-bold") }}
+                        {{ form.date(class="form-control", type="datetime-local", 
+                                   id="eventDate", 
+                                   min="{{ min_date }}") }}
+                        <div class="form-text">Select a future date and time</div>
+                        {% if form.date.errors %}
+                            <div class="text-danger">
+                                {% for error in form.date.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
-                {% endif %}
-            </div>
-            
-            <div class="col-md-6 mb-3">
-                {{ form.max_volunteers.label(class="form-label") }}
-                {{ form.max_volunteers(class="form-control") }}
-            </div>
-        </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        {{ form.max_volunteers.label(class="form-label fw-bold") }}
+                        {{ form.max_volunteers(class="form-control", 
+                                             type="number", 
+                                             min="1", 
+                                             max="100", 
+                                             placeholder="e.g., 10") }}
+                        <div class="form-text">Number of volunteers needed (1-90000000)</div>
+                        {% if form.max_volunteers.errors %}
+                            <div class="text-danger">
+                                {% for error in form.max_volunteers.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
 
-        <div class="mb-3">
-            {{ form.address.label(class="form-label") }}
-            {{ form.address(class="form-control") }}
-        </div>
+                <div class="mb-3">
+                    {{ form.address.label(class="form-label fw-bold") }}
+                    {{ form.address(class="form-control", placeholder="Street address") }}
+                </div>
 
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                {{ form.city.label(class="form-label") }}
-                {{ form.city(class="form-control") }}
-            </div>
-            
-            <div class="col-md-4 mb-3">
-                {{ form.state.label(class="form-label") }}
-                {{ form.state(class="form-control") }}
-            </div>
-            
-            <div class="col-md-4 mb-3">
-                {{ form.zip_code.label(class="form-label") }}
-                {{ form.zip_code(class="form-control") }}
-            </div>
-        </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        {{ form.city.label(class="form-label fw-bold") }}
+                        {{ form.city(class="form-control", placeholder="City") }}
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        {{ form.state.label(class="form-label fw-bold") }}
+                        {{ form.state(class="form-control", placeholder="State") }}
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        {{ form.zip_code.label(class="form-label fw-bold") }}
+                        {{ form.zip_code(class="form-control", placeholder="ZIP Code") }}
+                    </div>
+                </div>
 
-        <button type="submit" class="btn btn-primary">Create Event</button>
-        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancel</a>
-    </form>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary me-md-2">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-calendar-plus me-1"></i>Create Event
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
+<script>
+// Set minimum date to current date/time
+document.addEventListener('DOMContentLoaded', function() {
+    // Get current date in YYYY-MM-DDTHH:MM format
+    const now = new Date();
+    
+    // Add 5 minutes to avoid selecting current minute
+    now.setMinutes(now.getMinutes() + 5);
+    
+    // Format to YYYY-MM-DDTHH:MM
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    
+    // Set min attribute on date input
+    const dateInput = document.getElementById('eventDate');
+    if (dateInput) {
+        dateInput.min = minDateTime;
+        dateInput.value = minDateTime; // Set default value
+    }
+    
+    // Validate max volunteers on input
+    const maxVolunteersInput = document.querySelector('input[name="max_volunteers"]');
+    if (maxVolunteersInput) {
+        maxVolunteersInput.addEventListener('input', function() {
+            if (this.value < 1) {
+                this.value = 1;
+            }
+            if (this.value > 90000000) {
+                this.value = 90000000;
+            }
+        });
+    }
+});
+
+// Form validation function
+function validateEventForm() {
+    const dateInput = document.getElementById('eventDate');
+    const maxVolunteersInput = document.querySelector('input[name="max_volunteers"]');
+    
+    // Validate date
+    const selectedDate = new Date(dateInput.value);
+    const currentDate = new Date();
+    currentDate.setMinutes(currentDate.getMinutes() + 5); // Add 5 minutes buffer
+    
+    if (selectedDate < currentDate) {
+        alert('Please select a future date and time (at least 5 minutes from now).');
+        dateInput.focus();
+        return false;
+    }
+    
+    // Validate max volunteers
+    if (maxVolunteersInput.value < 1) {
+        alert('Maximum volunteers must be at least 1.');
+        maxVolunteersInput.focus();
+        return false;
+    }
+    
+    if (maxVolunteersInput.value > 90000000) {
+        alert('Maximum volunteers cannot exceed 90000000.');
+        maxVolunteersInput.focus();
+        return false;
+    }
+    
+    return true;
+}
+</script>
 {% endblock %}

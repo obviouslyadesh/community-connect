@@ -21,5 +21,3 @@ class Config:
     WEATHER_API_KEY = os.environ.get('WEATHER_API_KEY', 'demo-key')
     MAPS_API_KEY = os.environ.get('MAPS_API_KEY', 'demo-key')
     
-    # Developer Mode - ALWAYS FALSE IN PRODUCTION
-    DEVELOPER_MODE = os.environ.get('DEVELOPER_MODE', 'false').lower() == 'true'

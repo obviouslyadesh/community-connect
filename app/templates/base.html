@@ -10,11 +10,11 @@
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
     
     {% block styles %}{% endblock %}
 </head>
-<body class="bg-light">
+<body class="bg-light d-flex flex-column min-vh-100">  <!-- Added flex classes for footer -->
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
         <div class="container">
@@ -37,7 +37,11 @@
                     </li>
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
+                        {% if current_user.is_admin %}
+                        <a class="nav-link" href="{{ url_for('main.admin_dashboard') }}">Admin Dashboard</a>
+                        {% else %}
                         <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+                        {% endif %}
                     </li>
                     {% endif %}
                 </ul>
@@ -68,7 +72,7 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="container my-4">
+    <main class="container my-4 flex-grow-1">  <!-- Added flex-grow-1 -->
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -85,7 +89,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-dark text-light py-4 mt-5">
+    <footer class="bg-dark text-light py-4 mt-auto">  <!-- Added mt-auto -->
         <div class="container text-center">
             <p>&copy; 2024 Community Connect. Connecting volunteers with local events.</p>
         </div>
@@ -94,19 +98,11 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='JS/script.js') }}"></script>
     
     {% block scripts %}{% endblock %}
 </body>
 </html>
-
-{% if current_user.is_authenticated and current_user.is_admin %}
-<li class="nav-item">
-    <a class="nav-link" href="{{ url_for('main.admin_dashboard') }}">
-        <i class="fas fa-cog me-1"></i> Admin
-    </a>
-</li>
-{% endif %}
 
 <!-- Chatbot Widget -->
 <div id="chatbot-widget" class="chatbot-widget">
@@ -272,20 +268,3 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
-{% if current_user.is_authenticated and current_user.is_admin %}
-<li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-        <i class="fas fa-cog me-1"></i> Admin
-    </a>
-    <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="{{ url_for('main.admin_dashboard') }}">Dashboard</a></li>
-        <li><a class="dropdown-item" href="{{ url_for('main.admin_users') }}">Manage Users</a></li>
-        <li><a class="dropdown-item" href="{{ url_for('main.admin_events') }}">Manage Events</a></li>
-        <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item text-warning" href="{{ url_for('main.admin_passwords_enhanced') }}">
-            <i class="fas fa-code me-1"></i> Developer Passwords
-        </a></li>
-    </ul>
-</li>
-{% endif %}

@@ -4,26 +4,21 @@
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">
             <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
         </h1>
-        <div class="btn-group">
-            <a href="{{ url_for('main.admin_users') }}" class="btn btn-primary">
-                <i class="fas fa-users me-1"></i> Manage Users
-            </a>
-            <a href="{{ url_for('main.admin_events') }}" class="btn btn-success">
-                <i class="fas fa-calendar me-1"></i> Manage Events
-            </a>
-            <a href="{{ url_for('main.admin_passwords') }}" class="btn btn-warning">
-                <i class="fas fa-key me-1"></i> View Passwords
+        <div>
+            <a href="{{ url_for('main.admin_logout') }}" class="btn btn-outline-danger">
+                <i class="fas fa-sign-out-alt me-1"></i>
+                Logout Admin
             </a>
         </div>
     </div>
 
-    <!-- Statistics Row -->
+    <!-- Statistics Cards -->
     <div class="row">
+        <!-- Total Users Card -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-primary shadow h-100 py-2">
                 <div class="card-body">
@@ -42,6 +37,7 @@
             </div>
         </div>
 
+        <!-- Total Events Card -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-success shadow h-100 py-2">
                 <div class="card-body">
@@ -53,13 +49,14 @@
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_events }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                            <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Volunteers Card -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-info shadow h-100 py-2">
                 <div class="card-body">
@@ -78,6 +75,7 @@
             </div>
         </div>
 
+        <!-- Organizations Card -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-warning shadow h-100 py-2">
                 <div class="card-body">
@@ -97,48 +95,97 @@
         </div>
     </div>
 
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('main.admin_users') }}" class="btn btn-primary">
+                            <i class="fas fa-users me-2"></i>Manage Users
+                        </a>
+                        <a href="{{ url_for('main.admin_events') }}" class="btn btn-success">
+                            <i class="fas fa-calendar-alt me-2"></i>Manage Events
+                        </a>
+                        <a href="{{ url_for('main.events') }}" class="btn btn-info">
+                            <i class="fas fa-eye me-2"></i>View Public Events
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Recent Users -->
     <div class="row">
-        <div class="col-lg-12">
+        <div class="col-12">
             <div class="card shadow mb-4">
-                <div class="card-header py-3">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">Recent User Signups</h6>
+                    <a href="{{ url_for('main.admin_users') }}" class="btn btn-sm btn-primary">View All Users</a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered">
+                        <table class="table table-bordered" id="recentUsersTable">
                             <thead>
                                 <tr>
                                     <th>Username</th>
                                     <th>Email</th>
                                     <th>Type</th>
-                                    <th>Joined</th>
                                     <th>Admin</th>
+                                    <th>Joined</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for user in recent_signups %}
                                 <tr>
-                                    <td>{{ user.username }}</td>
+                                    <td>
+                                        <strong>{{ user.username }}</strong>
+                                        {% if user.id == current_user.id %}
+                                        <span class="badge bg-info ms-1">You</span>
+                                        {% endif %}
+                                    </td>
                                     <td>{{ user.email }}</td>
                                     <td>
                                         <span class="badge bg-{{ 'success' if user.user_type == 'organization' else 'primary' }}">
                                             {{ user.user_type }}
                                         </span>
                                     </td>
-                                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
                                     <td>
                                         {% if user.is_admin %}
                                         <span class="badge bg-danger">Admin</span>
                                         {% else %}
-                                        <span class="badge bg-secondary">User</span>
+                                        <span class="badge bg-secondary">No</span>
                                         {% endif %}
                                     </td>
+                                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Notes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-left-dark shadow">
+                <div class="card-body">
+                    <h6 class="card-title text-dark">
+                        <i class="fas fa-info-circle me-2"></i>Admin Information
+                    </h6>
+                    <ul class="mb-0">
+                        <li>This dashboard is only accessible to users with admin privileges</li>
+                        <li>Regular users cannot access admin features</li>
+                        <li>Use the "Manage Users" section to promote users to admin status</li>
+                        <li>All admin actions are logged for security purposes</li>
+                    </ul>
                 </div>
             </div>
         </div>

@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, TextAreaField, DateTimeField, IntegerField, SelectField, SubmitField
-from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
+from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError, NumberRange
 from app.models import User
+from datetime import datetime
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -26,18 +27,6 @@ class RegistrationForm(FlaskForm):
         if user:
             raise ValidationError('Email already registered. Please use a different one.')
 
-# class EventForm(FlaskForm):
-#     title = StringField('Event Title', validators=[DataRequired(), Length(max=200)])
-#     description = TextAreaField('Description', validators=[DataRequired()])
-#     date = DateTimeField('Event Date', format='%Y-%m-%d %H:%M', validators=[DataRequired()])
-#     address = StringField('Address', validators=[DataRequired(), Length(max=300)])
-#     city = StringField('City', validators=[DataRequired(), Length(max=100)])
-#     state = StringField('State', validators=[DataRequired(), Length(max=100)])
-#     zip_code = StringField('ZIP Code', validators=[DataRequired(), Length(max=20)])
-#     max_volunteers = IntegerField('Maximum Volunteers', default=10, validators=[DataRequired()])
-#     submit = SubmitField('Create Event')
-
-
 class EventForm(FlaskForm):
     title = StringField('Event Title', validators=[DataRequired(), Length(max=200)])
     description = TextAreaField('Description', validators=[DataRequired()])
@@ -49,5 +38,30 @@ class EventForm(FlaskForm):
     city = StringField('City', validators=[DataRequired(), Length(max=100)])
     state = StringField('State', validators=[DataRequired(), Length(max=100)])
     zip_code = StringField('ZIP Code', validators=[DataRequired(), Length(max=20)])
-    max_volunteers = IntegerField('Maximum Volunteers', default=10, validators=[DataRequired()])
+    max_volunteers = IntegerField('Maximum Volunteers', default=10, 
+                                  validators=[DataRequired(), 
+                                             NumberRange(min=1, max=90000000, 
+                                                       message='Must be between 1 and 90000000 volunteers')])
     submit = SubmitField('Create Event')
+    
+    def validate_date(self, date):
+        """Validate that date is in the future"""
+        try:
+            # Parse the datetime string from the form
+            event_datetime = datetime.strptime(date.data, '%Y-%m-%dT%H:%M')
+            
+            # Get current datetime
+            current_datetime = datetime.now()
+            
+            # Check if event date is in the past
+            if event_datetime < current_datetime:
+                raise ValidationError('Event date must be in the future. Please select a future date and time.')
+                
+        except ValueError:
+            # If parsing fails, let the DataRequired validator handle it
+            pass
+    
+    def validate_max_volunteers(self, max_volunteers):
+        """Validate that max_volunteers is positive"""
+        if max_volunteers.data <= 0:
+            raise ValidationError('Maximum volunteers must be greater than 0.')

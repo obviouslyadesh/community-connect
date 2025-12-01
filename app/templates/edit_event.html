@@ -6,18 +6,18 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card">
+            <div class="card shadow">
                 <div class="card-header bg-warning text-white">
                     <h4 class="card-title mb-0">
-                        <i class="fas fa-edit me-2"></i>Edit Event
+                        <i class="fas fa-edit me-2"></i>Edit Event: {{ event.title }}
                     </h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST">
+                    <form method="POST" id="eventForm" onsubmit="return validateEventForm()">
                         {{ form.hidden_tag() }}
                         
                         <div class="mb-3">
-                            {{ form.title.label(class="form-label") }}
+                            {{ form.title.label(class="form-label fw-bold") }}
                             {{ form.title(class="form-control") }}
                             {% if form.title.errors %}
                                 <div class="text-danger">
@@ -29,14 +29,16 @@
                         </div>
 
                         <div class="mb-3">
-                            {{ form.description.label(class="form-label") }}
+                            {{ form.description.label(class="form-label fw-bold") }}
                             {{ form.description(class="form-control", rows="4") }}
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                {{ form.date.label(class="form-label") }}
-                                {{ form.date(class="form-control", type="datetime-local") }}
+                                {{ form.date.label(class="form-label fw-bold") }}
+                                {{ form.date(class="form-control", type="datetime-local", 
+                                           id="eventDate") }}
+                                <div class="form-text">Select a future date and time</div>
                                 {% if form.date.errors %}
                                     <div class="text-danger">
                                         {% for error in form.date.errors %}
@@ -47,36 +49,49 @@
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                {{ form.max_volunteers.label(class="form-label") }}
-                                {{ form.max_volunteers(class="form-control") }}
+                                {{ form.max_volunteers.label(class="form-label fw-bold") }}
+                                {{ form.max_volunteers(class="form-control", 
+                                                     type="number", 
+                                                     min="1", 
+                                                     max="100") }}
+                                <div class="form-text">Number of volunteers needed (1-100)</div>
+                                {% if form.max_volunteers.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.max_volunteers.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            {{ form.address.label(class="form-label") }}
+                            {{ form.address.label(class="form-label fw-bold") }}
                             {{ form.address(class="form-control") }}
                         </div>
 
                         <div class="row">
                             <div class="col-md-4 mb-3">
-                                {{ form.city.label(class="form-label") }}
+                                {{ form.city.label(class="form-label fw-bold") }}
                                 {{ form.city(class="form-control") }}
                             </div>
                             
                             <div class="col-md-4 mb-3">
-                                {{ form.state.label(class="form-label") }}
+                                {{ form.state.label(class="form-label fw-bold") }}
                                 {{ form.state(class="form-control") }}
                             </div>
                             
                             <div class="col-md-4 mb-3">
-                                {{ form.zip_code.label(class="form-label") }}
+                                {{ form.zip_code.label(class="form-label fw-bold") }}
                                 {{ form.zip_code(class="form-control") }}
                             </div>
                         </div>
 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                             <a href="{{ url_for('main.event_detail', event_id=event.id) }}" 
-                               class="btn btn-secondary me-md-2">Cancel</a>
+                               class="btn btn-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
                             <button type="submit" class="btn btn-warning">
                                 <i class="fas fa-save me-1"></i>Update Event
                             </button>
@@ -88,7 +103,7 @@
                     <div class="text-center">
                         <form action="{{ url_for('main.delete_event', event_id=event.id) }}" 
                               method="POST" 
-                              onsubmit="return confirm('Are you sure you want to delete this event? This action cannot be undone.');">
+                              onsubmit="return confirm('Are you sure you want to delete this event? This will also remove all volunteer signups. This action cannot be undone.');">
                             <button type="submit" class="btn btn-danger">
                                 <i class="fas fa-trash me-1"></i>Delete Event
                             </button>
@@ -99,4 +114,89 @@
         </div>
     </div>
 </div>
+
+<script>
+// Set minimum date to current date/time when editing
+document.addEventListener('DOMContentLoaded', function() {
+    // Get current date in YYYY-MM-DDTHH:MM format
+    const now = new Date();
+    
+    // Add 5 minutes to avoid selecting current minute
+    now.setMinutes(now.getMinutes() + 5);
+    
+    // Format to YYYY-MM-DDTHH:MM
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    
+    // Set min attribute on date input
+    const dateInput = document.getElementById('eventDate');
+    if (dateInput) {
+        dateInput.min = minDateTime;
+        
+        // If the existing date is in the past, don't change it (editing existing event)
+        const existingDate = new Date(dateInput.value);
+        if (existingDate < now) {
+            // Don't set min for past events being edited
+            dateInput.min = '';
+        }
+    }
+    
+    // Validate max volunteers on input
+    const maxVolunteersInput = document.querySelector('input[name="max_volunteers"]');
+    if (maxVolunteersInput) {
+        maxVolunteersInput.addEventListener('input', function() {
+            if (this.value < 1) {
+                this.value = 1;
+            }
+            if (this.value > 90000000) {
+                this.value = 90000000;
+            }
+        });
+    }
+});
+
+// Form validation function
+function validateEventForm() {
+    const dateInput = document.getElementById('eventDate');
+    const maxVolunteersInput = document.querySelector('input[name="max_volunteers"]');
+    
+    // Get current date with 5 minute buffer
+    const currentDate = new Date();
+    currentDate.setMinutes(currentDate.getMinutes() + 5);
+    
+    // Parse selected date
+    const selectedDate = new Date(dateInput.value);
+    
+    // Check if we're editing an existing event with past date
+    const existingDate = new Date("{{ event.date.isoformat() if event.date else '' }}");
+    
+    // Only validate date if it's not an existing past event
+    if (selectedDate >= existingDate && selectedDate < currentDate) {
+        alert('Event date must be in the future. Please select a date at least 5 minutes from now.');
+        dateInput.focus();
+        return false;
+    }
+    
+    // Validate max volunteers
+    if (maxVolunteersInput.value < 1) {
+        alert('Maximum volunteers must be at least 1.');
+        maxVolunteersInput.focus();
+        return false;
+    }
+    
+    if (maxVolunteersInput.value > 90000000) {
+        alert('Maximum volunteers cannot exceed 90000000.');
+        maxVolunteersInput.focus();
+        return false;
+    }
+    
+    
+    return true;
+}
+</script>
 {% endblock %}

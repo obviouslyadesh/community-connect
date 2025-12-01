@@ -46,7 +46,28 @@
                     <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a></p>
                 </div>
                 
-                <div class="mt-4">
+                <!-- ADMIN LOGIN OPTION -->
+                <div class="card mt-4 border-dark">
+                    <div class="card-header bg-dark text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Admin Access
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text small">
+                            System administrators: Access the admin console with your admin credentials.
+                        </p>
+                        <div class="d-grid">
+                            <a href="{{ url_for('main.admin_login') }}" class="btn btn-outline-dark">
+                                <i class="fas fa-lock me-2"></i>
+                                Admin Console Login
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- <div class="mt-4">
                     <h6>Demo Accounts:</h6>
                     <div class="row">
                         <div class="col-6">
@@ -58,7 +79,7 @@
                             <code>sample_volunteer / password123</code>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
     </div>
