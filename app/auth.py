@@ -187,3 +187,59 @@ def google_callback():
         traceback.print_exc()
         flash(f'Failed to login with Google: {str(e)}', 'error')
         return redirect(url_for('auth.login'))
+    
+
+    # In your auth.py google_login function
+@auth.route('/auth/google')
+def google_login():
+    """Initiate Google OAuth flow - WITH DEBUG LOGGING"""
+    try:
+        # Get current configuration
+        redirect_uri = current_app.config.get('GOOGLE_REDIRECT_URI')
+        client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+        
+        print("\n" + "="*60)
+        print("🔍 DEBUG: Google OAuth Request")
+        print("="*60)
+        print(f"Client ID: {client_id}")
+        print(f"Redirect URI: {redirect_uri}")
+        
+        # Verify configuration
+        if not client_id:
+            print("❌ ERROR: Client ID not configured")
+            flash('OAuth configuration error. Please contact support.', 'error')
+            return redirect(url_for('auth.login'))
+        
+        if not redirect_uri:
+            print("❌ ERROR: Redirect URI not configured")
+            flash('OAuth configuration error. Please contact support.', 'error')
+            return redirect(url_for('auth.login'))
+        
+        # Check if we're in production
+        is_production = 'onrender.com' in redirect_uri or 'https://' in redirect_uri
+        
+        print(f"Environment: {'Production' if is_production else 'Development'}")
+        print("="*60)
+        
+        # Build the OAuth URL
+        from urllib.parse import urlencode
+        params = {
+            'client_id': client_id,
+            'redirect_uri': redirect_uri,
+            'response_type': 'code',
+            'scope': 'email profile',
+            'access_type': 'offline',
+            'prompt': 'consent'
+        }
+        
+        auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
+        print(f"\n✅ Generated URL: {auth_url[:100]}...")
+        
+        return redirect(auth_url)
+        
+    except Exception as e:
+        print(f"❌ Google login error: {e}")
+        import traceback
+        traceback.print_exc()
+        flash('Failed to connect to Google. Please try again.', 'error')
+        return redirect(url_for('auth.login'))
