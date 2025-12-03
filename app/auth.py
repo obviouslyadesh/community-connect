@@ -77,17 +77,15 @@ def logout():
 
 @auth.route('/auth/google')
 def google_login():
-    """Initiate Google OAuth flow - WITH DEBUG LOGGING"""
+    """Initiate Google OAuth flow - COMPLETE DEBUG VERSION"""
     try:
         # Get current configuration
         redirect_uri = current_app.config.get('GOOGLE_REDIRECT_URI')
         client_id = current_app.config.get('GOOGLE_CLIENT_ID')
         
         print("\n" + "="*60)
-        print("🔍 DEBUG: Google OAuth Request")
+        print("🔍 DEBUG: Building Google OAuth URL")
         print("="*60)
-        print(f"Client ID: {client_id}")
-        print(f"Redirect URI: {redirect_uri}")
         
         # Verify configuration
         if not client_id:
@@ -97,33 +95,55 @@ def google_login():
         
         if not redirect_uri:
             print("❌ ERROR: Redirect URI not configured")
-            print("   This usually means GOOGLE_REDIRECT_URI is not set in config")
-            print("   On Render, check environment variables:")
-            print("   - GOOGLE_CLIENT_ID")
-            print("   - GOOGLE_CLIENT_SECRET")
-            print("   - GOOGLE_REDIRECT_URI should be: https://community-connect-project.onrender.com/auth/google/callback")
             flash('OAuth configuration error. Please contact support.', 'error')
             return redirect(url_for('auth.login'))
         
-        # Check if we're in production
-        is_production = 'onrender.com' in redirect_uri
+        # Generate state for CSRF protection
+        import secrets
+        state = secrets.token_urlsafe(16)
+        session['oauth_state'] = state
         
-        print(f"Environment: {'Production' if is_production else 'Development'}")
-        print("="*60)
-        
-        # Build the OAuth URL
+        # Build the OAuth URL with EXACT Google requirements
         from urllib.parse import urlencode
+        
+        # CORRECT parameters - using full scope URLs
         params = {
             'client_id': client_id,
             'redirect_uri': redirect_uri,
             'response_type': 'code',
-            'scope': 'email profile',
+            'scope': 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
             'access_type': 'offline',
-            'prompt': 'consent'
+            'prompt': 'consent',
+            'state': state
         }
         
-        auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
-        print(f"\n✅ Generated URL: {auth_url[:100]}...")
+        # Encode and build URL
+        encoded_params = urlencode(params)
+        auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{encoded_params}"
+        
+        # Debug output - SHOW COMPLETE URL
+        print(f"Client ID: {client_id}")
+        print(f"Redirect URI: {redirect_uri}")
+        print(f"State: {state}")
+        print(f"\n✅ Generated COMPLETE URL:")
+        print(f"{auth_url}")
+        print(f"URL Length: {len(auth_url)} characters")
+        
+        # VERIFY URL HAS ALL PARAMETERS
+        required_params = ['response_type=', 'client_id=', 'redirect_uri=', 'scope=']
+        missing = []
+        for param in required_params:
+            if param not in auth_url:
+                missing.append(param)
+        
+        if missing:
+            print(f"\n❌ CRITICAL: URL missing parameters: {missing}")
+            print("The URL is malformed!")
+            flash('OAuth configuration error. Please contact support.', 'error')
+            return redirect(url_for('auth.login'))
+        
+        print("✅ URL verified - all required parameters present")
+        print("="*60)
         
         return redirect(auth_url)
         
@@ -133,7 +153,7 @@ def google_login():
         traceback.print_exc()
         flash('Failed to connect to Google. Please try again.', 'error')
         return redirect(url_for('auth.login'))
-
+    
 @auth.route('/auth/google/callback')
 def google_callback():
     """Handle Google OAuth callback - SIMPLIFIED"""

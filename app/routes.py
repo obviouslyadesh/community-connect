@@ -437,6 +437,50 @@ def delete_event(event_id):
         return redirect(url_for('main.dashboard'))
     else:
         return redirect(url_for('main.events'))
+    
+# Add to app/routes.py
+@main.route('/test-google-oauth')
+def test_google_oauth():
+    """Direct test of Google OAuth URL generation"""
+    from urllib.parse import urlencode
+    import secrets
+    
+    # Use the same logic as auth.py but return as clickable link
+    client_id = "329204650680-0rmc3npi3a3kf1o3cocr4n56dd0so8o3.apps.googleusercontent.com"
+    redirect_uri = "https://community-connect-project.onrender.com/auth/google/callback"
+    state = secrets.token_urlsafe(16)
+    
+    params = {
+        'client_id': client_id,
+        'redirect_uri': redirect_uri,
+        'response_type': 'code',
+        'scope': 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
+        'access_type': 'offline',
+        'prompt': 'consent',
+        'state': state
+    }
+    
+    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
+    
+    return f"""
+    <html>
+    <head><title>Google OAuth Test</title></head>
+    <body>
+        <h1>Google OAuth Test</h1>
+        <p>This URL should work:</p>
+        <a href="{auth_url}" target="_blank" style="font-size: 14px; word-break: break-all;">
+            {auth_url[:100]}...
+        </a>
+        <br><br>
+        <a href="{auth_url}" target="_blank">
+            <button>Test Google Login</button>
+        </a>
+        <br><br>
+        <p>If this works but /auth/google doesn't, there's an issue in auth.py</p>
+        <p><a href="/auth/google">Test regular auth/google route</a></p>
+    </body>
+    </html>
+    """
 
 # =================== DEBUG ROUTES ===================
 # @main.route('/debug-events')
