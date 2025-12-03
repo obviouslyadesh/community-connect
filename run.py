@@ -1,27 +1,32 @@
-from app import create_app, db
-from app.models import User, Event, EventVolunteer
+# run.py
+import os
+from dotenv import load_dotenv
+
+# Load .env file BEFORE importing app
+load_dotenv()
+
+# Check if .env is loaded
+print("🔍 CHECKING .env LOADING")
+print(f"Working directory: {os.getcwd()}")
+print(f".env exists: {os.path.exists('.env')}")
+
+if os.path.exists('.env'):
+    with open('.env', 'r') as f:
+        lines = f.readlines()
+        print("📄 .env contents (Google related):")
+        for line in lines:
+            if 'GOOGLE' in line and '#' not in line[:1]:
+                print(f"   {line.strip()[:60]}...")
+
+print("\n" + "="*60)
+
+# Now import and create app
+from app import create_app
 
 app = create_app()
 
-@app.cli.command("init-db")
-def init_db():
-    """Initialize the database."""
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
-        
-        # Create sample data
-        org = User(username='sample_org', email='org@example.com', user_type='organization', is_admin=True)
-        org.set_password('password123')
-        
-        volunteer = User(username='sample_volunteer', email='volunteer@example.com', user_type='volunteer')
-        volunteer.set_password('password123')
-        
-        db.session.add(org)
-        db.session.add(volunteer)
-        db.session.commit()
-        
-        print("Database initialized with sample data!")
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+    port = int(os.environ.get('PORT', 5001))
+    print(f"🚀 Starting Flask server on http://localhost:{port}")
+    print("📢 Press CTRL+C to stop\n")
+    app.run(host='0.0.0.0', port=port, debug=True)

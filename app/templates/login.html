@@ -10,6 +10,22 @@
                 <h4 class="card-title mb-0">Login to Your Account</h4>
             </div>
             <div class="card-body">
+                <!-- Google Login Option -->
+                <div class="text-center mb-4">
+                    <a href="{{ url_for('auth.google_login') }}" class="btn btn-outline-danger btn-lg w-100">
+                        <i class="fab fa-google me-2"></i>
+                        Continue with Google
+                    </a>
+                    <div class="mt-2">
+                        <small class="text-muted">Quick and secure login</small>
+                    </div>
+                </div>
+                
+                <div class="divider d-flex align-items-center my-4">
+                    <p class="text-center mx-3 mb-0 text-muted">OR</p>
+                </div>
+                
+                <!-- Regular Login Form -->
                 <form method="POST" action="{{ url_for('auth.login') }}">
                     {{ form.hidden_tag() }}
                     
@@ -46,7 +62,7 @@
                     <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a></p>
                 </div>
                 
-                <!-- ADMIN LOGIN OPTION -->
+                <!-- Admin Login Option -->
                 <div class="card mt-4 border-dark">
                     <div class="card-header bg-dark text-white">
                         <h6 class="mb-0">
@@ -67,7 +83,7 @@
                     </div>
                 </div>
                 
-                <!-- <div class="mt-4">
+                <div class="mt-4">
                     <h6>Demo Accounts:</h6>
                     <div class="row">
                         <div class="col-6">
@@ -79,9 +95,19 @@
                             <code>sample_volunteer / password123</code>
                         </div>
                     </div>
-                </div> -->
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.divider:after,
+.divider:before {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #e0e0e0;
+}
+</style>
 {% endblock %}

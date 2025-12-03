@@ -4,39 +4,53 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
+    <div class="col-md-6">
         <div class="card">
             <div class="card-header">
                 <h4 class="card-title mb-0">Create Your Account</h4>
             </div>
             <div class="card-body">
+                <!-- Google Signup Option -->
+                <div class="text-center mb-4">
+                    <a href="{{ url_for('auth.google_login') }}" class="btn btn-outline-danger btn-lg w-100">
+                        <i class="fab fa-google me-2"></i>
+                        Sign up with Google
+                    </a>
+                    <div class="mt-2">
+                        <small class="text-muted">Quick and secure registration</small>
+                    </div>
+                </div>
+                
+                <div class="divider d-flex align-items-center my-4">
+                    <p class="text-center mx-3 mb-0 text-muted">OR</p>
+                </div>
+                
+                <!-- Regular Registration Form -->
                 <form method="POST" action="{{ url_for('auth.register') }}">
                     {{ form.hidden_tag() }}
                     
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form.username.label(class="form-label") }}
-                            {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
-                            {% if form.username.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.username.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            {{ form.email.label(class="form-label") }}
-                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
-                            {% if form.email.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.email.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
+                    <div class="mb-3">
+                        {{ form.username.label(class="form-label") }}
+                        {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                        {% if form.username.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.username.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.email.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                     
                     <div class="mb-3">
@@ -49,36 +63,30 @@
                                 {% endfor %}
                             </div>
                         {% endif %}
-                        <div class="form-text">
-                            <strong>Volunteer:</strong> Find and sign up for events<br>
-                            <strong>Organization:</strong> Create and manage events
-                        </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form.password.label(class="form-label") }}
-                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
-                            {% if form.password.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.password.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            {{ form.confirm_password.label(class="form-label") }}
-                            {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else "")) }}
-                            {% if form.confirm_password.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.confirm_password.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
+                    <div class="mb-3">
+                        {{ form.password.label(class="form-label") }}
+                        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                        {% if form.password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.confirm_password.label(class="form-label") }}
+                        {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else "")) }}
+                        {% if form.confirm_password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.confirm_password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                     
                     <div class="d-grid">
@@ -93,4 +101,23 @@
         </div>
     </div>
 </div>
+
+<style>
+.divider:after,
+.divider:before {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #e0e0e0;
+}
+.btn-google {
+    color: #fff;
+    background-color: #db4437;
+    border-color: #db4437;
+}
+.btn-google:hover {
+    background-color: #c33d2e;
+    border-color: #c33d2e;
+}
+</style>
 {% endblock %}

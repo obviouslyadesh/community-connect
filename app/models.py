@@ -1,21 +1,25 @@
-from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
-
-db = SQLAlchemy()
+from app import db  # Import db from app package
 
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
     __table_args__ = {'extend_existing': True}
     
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
+    username = db.Column(db.String(80), unique=True, nullable=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))
-    user_type = db.Column(db.String(20), nullable=False)
+    password_hash = db.Column(db.String(128), nullable=True)
+    user_type = db.Column(db.String(20), nullable=True, default='volunteer')
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Google OAuth fields
+    google_id = db.Column(db.String(120), unique=True, nullable=True)
+    picture = db.Column(db.String(500), nullable=True)
+    given_name = db.Column(db.String(80), nullable=True)
+    family_name = db.Column(db.String(80), nullable=True)
     
     # Relationships
     events_created = db.relationship('Event', backref='organizer', lazy=True)
@@ -25,7 +29,49 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
     
     def check_password(self, password):
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
+    
+    @classmethod
+    def get_or_create_google_user(cls, google_data):
+        """Get existing user or create new user from Google data"""
+        # Check if user exists by google_id
+        user = cls.query.filter_by(google_id=google_data['sub']).first()
+        
+        if not user:
+            # Check if user exists by email
+            user = cls.query.filter_by(email=google_data['email']).first()
+            
+            if user:
+                # Update existing user with Google ID
+                user.google_id = google_data['sub']
+                user.picture = google_data.get('picture')
+                user.given_name = google_data.get('given_name')
+                user.family_name = google_data.get('family_name')
+            else:
+                # Create new user
+                username = google_data['email'].split('@')[0]
+                # Ensure username is unique
+                base_username = username
+                counter = 1
+                while cls.query.filter_by(username=username).first():
+                    username = f"{base_username}{counter}"
+                    counter += 1
+                
+                user = cls(
+                    username=username,
+                    email=google_data['email'],
+                    google_id=google_data['sub'],
+                    picture=google_data.get('picture'),
+                    given_name=google_data.get('given_name'),
+                    family_name=google_data.get('family_name'),
+                    user_type='volunteer'
+                )
+                db.session.add(user)
+        
+        db.session.commit()
+        return user
     
     def get_volunteer_stats(self):
         """Get volunteer statistics for admin view"""
