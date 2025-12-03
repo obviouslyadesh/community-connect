@@ -1,3 +1,4 @@
+# app/__init__.py - SIMPLIFIED
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -6,13 +7,13 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize extensions (without app context first)
+# Initialize extensions
 db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
 
-# Import User model for the user_loader (import here to avoid circular imports)
+# Import User model for the user_loader
 from app.models import User
 
 @login_manager.user_loader
@@ -38,26 +39,11 @@ def create_app(config_class='config.Config'):
     if client_id and '329204650680' in client_id:
         print("✅ SUCCESS: Real Client ID loaded!")
     elif client_id and 'your-google-client-id' in client_id:
-        print("❌ ERROR: Still using placeholder Client ID!")
-        print("   Make sure .env file has correct values")
+        print("❌ ERROR: Using placeholder Client ID!")
     else:
         print(f"⚠️  Client ID: {client_id}")
     
-    # FIX: Handle GOOGLE_REDIRECT_URI properly (it might be a property)
-    redirect_uri_config = app.config.get('GOOGLE_REDIRECT_URI')
-    
-    # Check if it's a property/function that needs to be called
-    if callable(redirect_uri_config):
-        # It's a property/method, call it
-        try:
-            redirect_uri = redirect_uri_config()
-        except:
-            # If calling fails, try to get as attribute
-            redirect_uri = getattr(config_class, 'GOOGLE_REDIRECT_URI', 'NOT SET')
-    else:
-        # It's already a string value
-        redirect_uri = redirect_uri_config
-    
+    redirect_uri = app.config.get('GOOGLE_REDIRECT_URI', 'NOT SET')
     print(f"Redirect URI: {redirect_uri}")
     print("="*60 + "\n")
     
@@ -65,7 +51,7 @@ def create_app(config_class='config.Config'):
     db.init_app(app)
     login_manager.init_app(app)
     
-    # Import and register blueprints (inside function to avoid circular imports)
+    # Import and register blueprints
     from app.auth import auth as auth_bp
     from app.routes import main as main_bp
     

@@ -74,15 +74,13 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('main.index'))
 
-# Google OAuth Routes
+
 @auth.route('/auth/google')
 def google_login():
     """Initiate Google OAuth flow - WITH DEBUG LOGGING"""
     try:
         # Get current configuration
         redirect_uri = current_app.config.get('GOOGLE_REDIRECT_URI')
-        if callable(redirect_uri):
-            redirect_uri = redirect_uri()
         client_id = current_app.config.get('GOOGLE_CLIENT_ID')
         
         print("\n" + "="*60)
@@ -99,11 +97,16 @@ def google_login():
         
         if not redirect_uri:
             print("❌ ERROR: Redirect URI not configured")
+            print("   This usually means GOOGLE_REDIRECT_URI is not set in config")
+            print("   On Render, check environment variables:")
+            print("   - GOOGLE_CLIENT_ID")
+            print("   - GOOGLE_CLIENT_SECRET")
+            print("   - GOOGLE_REDIRECT_URI should be: https://community-connect-project.onrender.com/auth/google/callback")
             flash('OAuth configuration error. Please contact support.', 'error')
             return redirect(url_for('auth.login'))
         
         # Check if we're in production
-        is_production = 'onrender.com' in redirect_uri or 'https://' in redirect_uri
+        is_production = 'onrender.com' in redirect_uri
         
         print(f"Environment: {'Production' if is_production else 'Development'}")
         print("="*60)
