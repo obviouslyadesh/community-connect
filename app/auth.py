@@ -75,78 +75,28 @@ def logout():
     return redirect(url_for('main.index'))
 
 
+# In auth.py google_login function:
 @auth.route('/auth/google')
 def google_login():
-    """Initiate Google OAuth flow - COMPLETE DEBUG VERSION"""
+    """Initiate Google OAuth flow - USING OAUTH.PY"""
     try:
-        # Get current configuration
-        redirect_uri = current_app.config.get('GOOGLE_REDIRECT_URI')
-        client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+        from app.oauth import GoogleOAuth
         
-        print("\n" + "="*60)
-        print("🔍 DEBUG: Building Google OAuth URL")
-        print("="*60)
+        # Get authorization URL and state
+        auth_url, state = GoogleOAuth.get_authorization_url()
         
-        # Verify configuration
-        if not client_id:
-            print("❌ ERROR: Client ID not configured")
-            flash('OAuth configuration error. Please contact support.', 'error')
-            return redirect(url_for('auth.login'))
-        
-        if not redirect_uri:
-            print("❌ ERROR: Redirect URI not configured")
-            flash('OAuth configuration error. Please contact support.', 'error')
-            return redirect(url_for('auth.login'))
-        
-        # Generate state for CSRF protection
-        import secrets
-        state = secrets.token_urlsafe(16)
+        # Store state in session
         session['oauth_state'] = state
         
-        # Build the OAuth URL with EXACT Google requirements
-        from urllib.parse import urlencode
-        
-        # CORRECT parameters - using full scope URLs
-        params = {
-            'client_id': client_id,
-            'redirect_uri': redirect_uri,
-            'response_type': 'code',
-            'scope': 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
-            'access_type': 'offline',
-            'prompt': 'consent',
-            'state': state
-        }
-        
-        # Encode and build URL
-        encoded_params = urlencode(params)
-        auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{encoded_params}"
-        
-        # Debug output - SHOW COMPLETE URL
-        print(f"Client ID: {client_id}")
-        print(f"Redirect URI: {redirect_uri}")
-        print(f"State: {state}")
-        print(f"\n✅ Generated COMPLETE URL:")
+        print(f"\n✅ Generated URL via oauth.py:")
         print(f"{auth_url}")
-        print(f"URL Length: {len(auth_url)} characters")
-        
-        # VERIFY URL HAS ALL PARAMETERS
-        required_params = ['response_type=', 'client_id=', 'redirect_uri=', 'scope=']
-        missing = []
-        for param in required_params:
-            if param not in auth_url:
-                missing.append(param)
-        
-        if missing:
-            print(f"\n❌ CRITICAL: URL missing parameters: {missing}")
-            print("The URL is malformed!")
-            flash('OAuth configuration error. Please contact support.', 'error')
-            return redirect(url_for('auth.login'))
-        
-        print("✅ URL verified - all required parameters present")
-        print("="*60)
         
         return redirect(auth_url)
         
+    except ValueError as e:
+        print(f"❌ Configuration error: {e}")
+        flash('OAuth configuration error. Please contact support.', 'error')
+        return redirect(url_for('auth.login'))
     except Exception as e:
         print(f"❌ Google login error: {e}")
         import traceback
