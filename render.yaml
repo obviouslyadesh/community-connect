@@ -21,6 +21,12 @@ services:
         value: "demo-maps-key"
       - key: DEVELOPER_MODE
         value: "false"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        value: https://community-connect.onrender.com/auth/google/callback
 
 databases:
   - name: community-connect-db
