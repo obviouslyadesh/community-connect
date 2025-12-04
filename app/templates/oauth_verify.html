@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OAuth Configuration Verification</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .card { background: white; padding: 30px; margin: 20px 0; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .section { margin-bottom: 30px; }
+        h1 { color: #333; border-bottom: 2px solid #4285f4; padding-bottom: 10px; }
+        h2 { color: #555; margin-top: 25px; }
+        .status { padding: 8px 15px; border-radius: 5px; font-weight: bold; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .config-item { margin: 15px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #4285f4; }
+        .config-label { font-weight: bold; color: #333; }
+        .config-value { color: #666; word-break: break-all; }
+        .recommendation { padding: 10px 15px; margin: 10px 0; background: #e3f2fd; border-left: 4px solid #2196f3; }
+        .button { background: #4285f4; color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; margin: 10px 5px; }
+        .button:hover { background: #357ae8; }
+        .button-secondary { background: #6c757d; }
+        .button-secondary:hover { background: #5a6268; }
+        .test-section { background: #e8f5e8; padding: 20px; border-radius: 5px; margin: 20px 0; }
+        .url-display { background: #f8f9fa; padding: 10px; border: 1px solid #dee2e6; border-radius: 5px; font-family: monospace; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🔍 Google OAuth Configuration Verification</h1>
+            
+            <div class="section">
+                <div class="status {{ 'success' if not missing_config else 'error' }}">
+                    {% if not missing_config %}
+                    ✅ All required configurations are set
+                    {% else %}
+                    ❌ Missing configurations: {{ missing_config|join(', ') }}
+                    {% endif %}
+                </div>
+                
+                <div class="status {{ 'success' if redirect_matches else 'warning' }}">
+                    {% if redirect_matches %}
+                    ✅ Redirect URI matches expected value
+                    {% else %}
+                    ⚠️ Redirect URI does not match expected value
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📋 Environment Information</h2>
+                <div class="config-item">
+                    <div class="config-label">Environment</div>
+                    <div class="config-value">
+                        {% if is_production %}
+                        🚀 Production (Render)
+                        {% else %}
+                        💻 Development
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="config-item">
+                    <div class="config-label">Current Application URL</div>
+                    <div class="config-value">{{ base_url }}</div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>🔑 Google OAuth Configuration</h2>
+                {% for key, value in google_config.items() %}
+                <div class="config-item">
+                    <div class="config-label">{{ key }}</div>
+                    <div class="config-value">{{ value }}</div>
+                </div>
+                {% endfor %}
+                
+                <div class="config-item">
+                    <div class="config-label">Expected Redirect URI ({{ 'Production' if is_production else 'Development' }})</div>
+                    <div class="config-value">{{ expected_config.expected_redirect_uri }}</div>
+                </div>
+            </div>
+            
+            {% if connectivity %}
+            <div class="section">
+                <h2>🌐 Connectivity Tests</h2>
+                {% for service, info in connectivity.items() %}
+                <div class="config-item">
+                    <div class="config-label">{{ service|replace('_', ' ')|title }}</div>
+                    <div class="config-value">{{ info.status }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            {% if recommendations %}
+            <div class="section">
+                <h2>🚨 Action Required</h2>
+                {% for rec in recommendations %}
+                <div class="recommendation">{{ loop.index }}. {{ rec }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="test-section">
+                <h2>🧪 Test OAuth Login</h2>
+                {% if test_auth_url %}
+                <p>Click the button below to test Google OAuth login:</p>
+                <a href="{{ test_auth_url }}" class="button" target="_blank">Test Google Login</a>
+                <p>Or use this URL:</p>
+                <div class="url-display">{{ test_auth_url }}</div>
+                {% else %}
+                <p>Cannot generate test URL. Please fix the configuration issues above first.</p>
+                {% endif %}
+            </div>
+            
+            <div class="section">
+                <h2>📝 Setup Instructions</h2>
+                <ol>
+                    <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console → Credentials</a></li>
+                    <li>Select your OAuth 2.0 Client ID</li>
+                    <li>Add to <strong>Authorized JavaScript origins</strong>:
+                        <div class="url-display">https://community-connect-project.onrender.com</div>
+                    </li>
+                    <li>Add to <strong>Authorized redirect URIs</strong>:
+                        <div class="url-display">https://community-connect-project.onrender.com/auth/google/callback</div>
+                    </li>
+                    <li>Save changes</li>
+                    <li>Wait 5-10 minutes for changes to propagate</li>
+                </ol>
+            </div>
+            
+            <div style="margin-top: 30px; text-align: center;">
+                <a href="/" class="button button-secondary">← Back to Home</a>
+                <a href="https://render.com" class="button button-secondary" target="_blank">Render Dashboard</a>
+                <a href="https://console.cloud.google.com" class="button button-secondary" target="_blank">Google Cloud Console</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

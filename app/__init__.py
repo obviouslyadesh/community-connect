@@ -1,8 +1,9 @@
-# app/__init__.py - SIMPLIFIED
+# app/__init__.py - COMPLETE UPDATED VERSION
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from dotenv import load_dotenv
+import os
 
 # Load environment variables from .env file
 load_dotenv()
@@ -45,6 +46,18 @@ def create_app(config_class='config.Config'):
     
     redirect_uri = app.config.get('GOOGLE_REDIRECT_URI', 'NOT SET')
     print(f"Redirect URI: {redirect_uri}")
+    
+    # Check if on Render
+    if os.environ.get('RENDER'):
+        print("🚀 Running on RENDER")
+        expected_uri = "https://community-connect-project.onrender.com/auth/google/callback"
+        if redirect_uri != expected_uri:
+            print(f"❌ WARNING: Redirect URI mismatch!")
+            print(f"   Current: {redirect_uri}")
+            print(f"   Expected: {expected_uri}")
+    else:
+        print("💻 Running locally")
+    
     print("="*60 + "\n")
     
     # Initialize extensions with app
@@ -55,8 +68,12 @@ def create_app(config_class='config.Config'):
     from app.auth import auth as auth_bp
     from app.routes import main as main_bp
     
+    # Import oauth_verify blueprint
+    from app.oauth_verify import oauth_verify_bp
+    
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
+    app.register_blueprint(oauth_verify_bp)  # Register verification blueprint
     
     # Create database tables
     with app.app_context():

@@ -1,6 +1,7 @@
+# render.yaml - COMPLETE UPDATED FILE
 services:
   - type: web
-    name: community-connect
+    name: community-connect-project  # Updated to match your URL
     env: python
     plan: free
     branch: main
@@ -21,12 +22,14 @@ services:
         value: "demo-maps-key"
       - key: DEVELOPER_MODE
         value: "false"
+      # THESE MUST BE SET IN RENDER DASHBOARD
       - key: GOOGLE_CLIENT_ID
-        sync: false
+        syncValue: false
       - key: GOOGLE_CLIENT_SECRET
-        sync: false
+        syncValue: false
+      # CRITICAL: This must match your Google Cloud Console
       - key: GOOGLE_REDIRECT_URI
-        value: https://community-connect.onrender.com/auth/google/callback
+        value: "https://community-connect-project.onrender.com/auth/google/callback"
 
 databases:
   - name: community-connect-db

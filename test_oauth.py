@@ -1,53 +1,54 @@
-# test_oauth_url.py
+# deploy_verify.py - NEW FILE
 import os
-from urllib.parse import urlencode
+import sys
 
-# Your credentials
-CLIENT_ID = "329204650680-0rmc3npi3a3kf1o3cocr4n56dd0so8o3.apps.googleusercontent.com"
-REDIRECT_URI = "https://community-connect-project.onrender.com/auth/google/callback"
+print("🚀 DEPLOYMENT VERIFICATION FOR RENDER")
+print("="*70)
 
-print("🧪 TESTING GOOGLE OAUTH URL GENERATION")
-print("="*60)
+print("\n📋 Checking configuration files...")
 
-# Test different scope formats
-scopes = [
-    # Option 1: Space-separated keywords (might not work)
-    "email profile",
-    
-    # Option 2: Full URL scopes (RECOMMENDED)
-    "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid",
-    
-    # Option 3: With openid
-    "openid email profile",
-    
-    # Option 4: Just email
-    "https://www.googleapis.com/auth/userinfo.email",
-]
-
-for i, scope in enumerate(scopes, 1):
-    params = {
-        'client_id': CLIENT_ID,
-        'redirect_uri': REDIRECT_URI,
-        'response_type': 'code',
-        'scope': scope,
-        'access_type': 'offline',
-        'prompt': 'consent',
-        'state': 'test123'  # Add state parameter
-    }
-    
-    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
-    
-    print(f"\n🔗 Option {i}: Scope = '{scope}'")
-    print(f"URL: {auth_url[:100]}...")
-    print(f"Length: {len(auth_url)} chars")
-    
-    # Test if URL looks valid
-    if 'openid' in scope or 'https://www.googleapis.com' in scope:
-        print("✅ Using recommended scope format")
+# Check config.py
+with open('config.py', 'r') as f:
+    content = f.read()
+    if 'community-connect-project.onrender.com' in content:
+        print("✅ config.py has correct Render URL")
     else:
-        print("⚠️  Using simple scope format (might cause 400)")
+        print("❌ config.py needs URL update")
 
-print("\n" + "="*60)
-print("📋 Most likely issue: Scope format")
-print("Try using FULL URL scopes instead of keywords")
-print("="*60)
+# Check render.yaml
+with open('render.yaml', 'r') as f:
+    content = f.read()
+    if 'community-connect-project' in content:
+        print("✅ render.yaml has correct service name")
+    else:
+        print("❌ render.yaml needs service name update")
+
+print("\n🔧 Required Environment Variables for Render:")
+print("""
+1. SECRET_KEY (auto-generated)
+2. DATABASE_URL (auto-generated)
+3. GOOGLE_CLIENT_ID (YOU MUST SET THIS)
+4. GOOGLE_CLIENT_SECRET (YOU MUST SET THIS)
+5. GOOGLE_REDIRECT_URI (already in render.yaml)
+""")
+
+print("\n📍 Your Render URLs:")
+print("   Application: https://community-connect-project.onrender.com")
+print("   OAuth Callback: https://community-connect-project.onrender.com/auth/google/callback")
+
+print("\n🔐 Google Cloud Console Setup:")
+print("""
+1. Go to: https://console.cloud.google.com/apis/credentials
+2. Edit your OAuth 2.0 Client ID
+3. Add to Authorized JavaScript origins:
+   - https://community-connect-project.onrender.com
+4. Add to Authorized redirect URIs:
+   - https://community-connect-project.onrender.com/auth/google/callback
+5. Save and wait 5-10 minutes
+""")
+
+print("\n✅ After deployment, visit:")
+print("   https://community-connect-project.onrender.com/verify-oauth")
+print("   to verify your OAuth configuration")
+
+print("\n" + "="*70)

@@ -1,4 +1,4 @@
-# config.py
+# config.py - COMPLETE UPDATED FILE
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -19,9 +19,10 @@ class Config:
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
     
-    # Redirect URI - EXACT strings
+    # Redirect URI - CRITICAL: Use your actual Render URL
+    # Get from environment or use your actual URL
     if os.environ.get('RENDER'):
-        # Production - EXACT string
+        # Production - Use YOUR ACTUAL Render URL
         GOOGLE_REDIRECT_URI = "https://community-connect-project.onrender.com/auth/google/callback"
     else:
         # Development
@@ -38,11 +39,19 @@ class Config:
         
         env = "Production" if os.environ.get('RENDER') else "Development"
         print(f"Environment: {env}")
+        print(f"Render URL: https://community-connect-project.onrender.com")
         
         print(f"\n🔑 Google OAuth Credentials:")
         print(f"Client ID: {self.GOOGLE_CLIENT_ID[:40]}..." if self.GOOGLE_CLIENT_ID else "❌ Client ID: NOT SET")
         print(f"Client Secret: {'✅ SET' if self.GOOGLE_CLIENT_SECRET else '❌ NOT SET'}")
         print(f"Redirect URI: {self.GOOGLE_REDIRECT_URI}")
+        
+        # Verify the redirect URI is correct
+        expected_prod_uri = "https://community-connect-project.onrender.com/auth/google/callback"
+        if os.environ.get('RENDER') and self.GOOGLE_REDIRECT_URI != expected_prod_uri:
+            print(f"\n⚠️  WARNING: Redirect URI mismatch!")
+            print(f"   Current: {self.GOOGLE_REDIRECT_URI}")
+            print(f"   Expected: {expected_prod_uri}")
         
         # Critical checks
         if os.environ.get('RENDER'):
