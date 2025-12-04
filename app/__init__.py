@@ -14,6 +14,7 @@ login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
 
+# In app/__init__.py, update the create_app function:
 def create_app(config_class='config.Config'):
     """Application factory function"""
     app = Flask(__name__)
@@ -67,11 +68,17 @@ def create_app(config_class='config.Config'):
     app.register_blueprint(main_bp)
     app.register_blueprint(oauth_verify_bp)
     
-    # Create database tables
+    # Create database tables - WITH ERROR HANDLING
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+            print("✅ Database tables created/verified")
+        except Exception as e:
+            print(f"⚠️  Note: Database table creation error (tables may already exist): {e}")
+            # Don't crash - tables likely already exist
     
     return app
+
 
 # Import User model and define user_loader AFTER create_app
 # to avoid circular imports

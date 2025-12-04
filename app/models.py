@@ -164,7 +164,7 @@ class Event(db.Model):
 class EventVolunteer(db.Model):
     __tablename__ = 'event_volunteers'  # Changed for consistency
     __table_args__ = (
-        db.UniqueConstraint('event_id', 'volunteer_id', name='unique_volunteer_event'),
+        db.UniqueConstraint('event_id', 'volunteer_id', name='uq_volunteer_event'),
         {'extend_existing': True}
     )
     
