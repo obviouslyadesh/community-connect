@@ -1,4 +1,4 @@
-# app/auth.py - COMPLETE FIXED VERSION
+# app/auth.py - UPDATED WITH BETTER ERROR HANDLING
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -24,7 +24,7 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         
         if user and user.check_password(form.password.data):
-            login_user(user)
+            login_user(user, remember=False)
             flash('Login successful!', 'success')
             return redirect(url_for('main.dashboard'))
         else:
@@ -94,7 +94,7 @@ def google_login():
         state = secrets.token_urlsafe(16)
         session['oauth_state'] = state
         
-        # Build URL manually (or use GoogleOAuth.get_authorization_url())
+        # Build URL manually
         from urllib.parse import urlencode
         params = {
             'client_id': client_id,
@@ -120,7 +120,7 @@ def google_login():
     
 @auth.route('/auth/google/callback')
 def google_callback():
-    """Handle Google OAuth callback - FIXED VERSION"""
+    """Handle Google OAuth callback - IMPROVED VERSION"""
     # Get authorization code
     code = request.args.get('code')
     
@@ -131,6 +131,9 @@ def google_callback():
         flash(f'Authorization failed: {error_desc or "No code received"}', 'error')
         return redirect(url_for('auth.login'))
     
+    print(f"\n" + "="*60)
+    print("🔄 GOOGLE OAUTH CALLBACK STARTED")
+    print("="*60)
     print(f"✅ Received authorization code: {code[:30]}...")
     
     try:
@@ -158,7 +161,17 @@ def google_callback():
             flash('Failed to get user information from Google.', 'error')
             return redirect(url_for('auth.login'))
         
-        print(f"✅ User info received: {user_info.get('email')}")
+        print(f"✅ User info received:")
+        print(f"   Email: {user_info.get('email')}")
+        print(f"   Name: {user_info.get('name')}")
+        print(f"   Google ID: {user_info.get('sub')}")
+        
+        # Check if User class has the method
+        if not hasattr(User, 'get_or_create_google_user'):
+            print("❌ ERROR: User class doesn't have get_or_create_google_user method!")
+            print(f"   User class methods: {[m for m in dir(User) if not m.startswith('_')]}")
+            flash('Server configuration error. Please contact support.', 'error')
+            return redirect(url_for('auth.login'))
         
         # Get or create user
         print("🔄 Getting or creating user...")
@@ -169,12 +182,13 @@ def google_callback():
             flash('Failed to create user account.', 'error')
             return redirect(url_for('auth.login'))
         
-        # CRITICAL: Ensure user has an ID before logging in
+        # CRITICAL: Ensure user has an ID
         if user.id is None:
-            print("🔄 User has no ID, committing to database...")
-            db.session.add(user)
-            db.session.commit()
-            print(f"✅ User committed to database with ID: {user.id}")
+            print("❌ ERROR: User has no ID after creation!")
+            print(f"   User object: {user}")
+            print(f"   User attributes: {user.__dict__}")
+            flash('Database error. Please try again.', 'error')
+            return redirect(url_for('auth.login'))
         
         # Debug: Print user info
         print(f"📋 User details before login:")
@@ -183,25 +197,34 @@ def google_callback():
         print(f"   Username: {user.username}")
         print(f"   Google ID: {user.google_id}")
         
-        # Login the user - IMPORTANT FIX: Use remember=False initially
-        login_result = login_user(user, remember=False)
+        # Clear any existing session issues
+        session.pop('_user_id', None)
         
-        if not login_result:
+        # Login the user
+        print("🔄 Logging in user...")
+        login_success = login_user(user, remember=False)
+        
+        if not login_success:
             print("❌ login_user() returned False!")
             flash('Login failed. Please try again.', 'error')
             return redirect(url_for('auth.login'))
         
-        # Store user info in session for debugging
+        # Store user info in session
         session['user_id'] = user.id
         session['user_email'] = user.email
+        
+        print(f"✅ User logged in successfully!")
+        print(f"   User ID: {user.id}")
+        print(f"   Username: {user.username}")
+        print(f"   Session user_id: {session.get('user_id')}")
         
         # Welcome message
         welcome_name = user_info.get('given_name') or user_info.get('name') or user.username
         flash(f'Welcome, {welcome_name}!', 'success')
         
-        print(f"✅ User logged in successfully: {user.email}")
-        print(f"   User ID in session: {session.get('user_id')}")
-        print(f"   Current user authenticated: {current_user.is_authenticated}")
+        print("="*60)
+        print("✅ LOGIN COMPLETE - Redirecting to dashboard")
+        print("="*60)
         
         # Redirect to dashboard
         return redirect(url_for('main.dashboard'))
@@ -213,36 +236,68 @@ def google_callback():
         flash(f'Failed to login with Google: {str(e)}', 'error')
         return redirect(url_for('auth.login'))
 
-# Add debug routes for troubleshooting
 @auth.route('/debug/session')
 def debug_session():
     """Debug session information"""
+    from app.models import User
+    
+    # Get current user info if logged in
+    current_user_info = {}
+    if current_user.is_authenticated:
+        current_user_info = {
+            'id': current_user.id,
+            'username': current_user.username,
+            'email': current_user.email,
+            'is_authenticated': current_user.is_authenticated
+        }
+    else:
+        current_user_info = {
+            'is_authenticated': False,
+            'id': 'Not logged in',
+            'username': 'Not logged in',
+            'email': 'Not logged in'
+        }
+    
     session_info = {
         'session_id': session.get('_id'),
         'user_id': session.get('user_id'),
         'user_email': session.get('user_email'),
         'oauth_state': session.get('oauth_state'),
         '_fresh': session.get('_fresh'),
-        '_user_id': session.get('_user_id'),  # Flask-Login's user ID
+        '_user_id': session.get('_user_id'),
+        '_flashes': session.get('_flashes', [])
     }
+    
+    # Count users in database
+    user_count = User.query.count()
     
     return f"""
     <html>
         <head><title>Session Debug</title></head>
         <body>
             <h1>Session Debug</h1>
+            
+            <h2>Session Info:</h2>
             <pre>{json.dumps(session_info, indent=2)}</pre>
+            
             <h2>Current User:</h2>
-            <pre>{json.dumps({
-                'is_authenticated': current_user.is_authenticated,
-                'id': getattr(current_user, 'id', 'No id attribute'),
-                'username': getattr(current_user, 'username', 'No username'),
-                'email': getattr(current_user, 'email', 'No email')
-            }, indent=2)}</pre>
+            <pre>{json.dumps(current_user_info, indent=2)}</pre>
+            
+            <h2>Database Info:</h2>
+            <p>Users in database: {user_count}</p>
+            
+            <h3>Test Links:</h3>
+            <ul>
+                <li><a href="/auth/google">Test Google Login</a></li>
+                <li><a href="/debug/users">View All Users</a></li>
+                <li><a href="/fix-session">Fix Session (Clear & Logout)</a></li>
+                <li><a href="/">Home</a></li>
+                <li><a href="/dashboard">Dashboard (will redirect if not logged in)</a></li>
+            </ul>
+            
             <hr>
-            <a href="/">Home</a> | 
-            <a href="/auth/google">Test Google Login</a> | 
-            <a href="/logout">Logout</a>
+            <p><strong>Note:</strong> If _user_id is "None" (string), there's a session issue.</p>
+            <p>Use "Fix Session" link to clear it.</p>
         </body>
     </html>
     """
@@ -267,23 +322,26 @@ def debug_users():
     <html>
         <head><title>Users Debug</title></head>
         <body>
-            <h1>Users in Database</h1>
+            <h1>Users in Database ({len(user_list)})</h1>
             <pre>{json.dumps(user_list, indent=2)}</pre>
             <hr>
-            <a href="/">Home</a> | 
-            <a href="/debug/session">Session Debug</a>
+            <a href="/debug/session">Session Debug</a> | 
+            <a href="/">Home</a>
         </body>
     </html>
     """
 
-@auth.route('/fix-login')
-def fix_login():
-    """Fix login issues by clearing session"""
-    # Clear session
+@auth.route('/fix-session')
+def fix_session():
+    """Fix session issues by clearing everything"""
+    # Clear all session data
     session.clear()
     
-    # Clear Flask-Login
+    # Logout user
     logout_user()
     
-    flash('Session cleared. Please login again.', 'info')
+    # Create new session ID
+    session.modified = True
+    
+    flash('Session completely cleared. Please login again.', 'info')
     return redirect(url_for('auth.login'))
