@@ -1,58 +1,54 @@
-# config.py - SIMPLIFIED VERSION
+# config.py
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
 
-# Only load .env in development
-if os.environ.get('RENDER') is None and os.environ.get('FLASK_ENV') != 'production':
+# Load .env only in development
+if os.environ.get('RENDER') is None:
     load_dotenv()
 
 class Config:
+    # Flask
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
     
     # Database
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///community_connect.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # Google OAuth - NO DEFAULTS!
+    # Google OAuth - REQUIRED, no defaults
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
     
-    # DIRECT ATTRIBUTE - NOT A PROPERTY
+    # Redirect URI - EXACT strings
     if os.environ.get('RENDER'):
-        # Production on Render
-        render_url = os.environ.get('RENDER_EXTERNAL_URL', 'https://community-connect-project.onrender.com')
-        GOOGLE_REDIRECT_URI = f"{render_url}/auth/google/callback"
+        # Production - EXACT string
+        GOOGLE_REDIRECT_URI = "https://community-connect-project.onrender.com/auth/google/callback"
     else:
-        # Local development
-        GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI', 'http://localhost:5001/auth/google/callback')
+        # Development
+        GOOGLE_REDIRECT_URI = "http://localhost:5001/auth/google/callback"
     
-    # API Keys
+    # Optional API keys
     WEATHER_API_KEY = os.environ.get('WEATHER_API_KEY', 'demo-weather-key')
     MAPS_API_KEY = os.environ.get('MAPS_API_KEY', 'demo-maps-key')
     
     def __init__(self):
         print("\n" + "="*60)
-        print("📋 CONFIGURATION CHECK - PRODUCTION")
+        print("🔥 GOOGLE OAUTH CONFIGURATION")
         print("="*60)
         
-        if os.environ.get('RENDER'):
-            print("✅ Environment: Production (Render)")
-            print(f"   RENDER_EXTERNAL_URL: {os.environ.get('RENDER_EXTERNAL_URL', 'NOT SET')}")
-        else:
-            print("✅ Environment: Development (Local)")
+        env = "Production" if os.environ.get('RENDER') else "Development"
+        print(f"Environment: {env}")
         
-        print(f"\n🔑 Google OAuth:")
-        print(f"   Client ID: {self.GOOGLE_CLIENT_ID[:40]}..." if self.GOOGLE_CLIENT_ID else "❌ Client ID: NOT SET")
-        print(f"   Client Secret: {'✅ SET' if self.GOOGLE_CLIENT_SECRET else '❌ NOT SET'}")
-        print(f"   Redirect URI: {self.GOOGLE_REDIRECT_URI}")
+        print(f"\n🔑 Google OAuth Credentials:")
+        print(f"Client ID: {self.GOOGLE_CLIENT_ID[:40]}..." if self.GOOGLE_CLIENT_ID else "❌ Client ID: NOT SET")
+        print(f"Client Secret: {'✅ SET' if self.GOOGLE_CLIENT_SECRET else '❌ NOT SET'}")
+        print(f"Redirect URI: {self.GOOGLE_REDIRECT_URI}")
         
+        # Critical checks
         if os.environ.get('RENDER'):
             if not self.GOOGLE_CLIENT_ID:
-                print("\n❌ CRITICAL: GOOGLE_CLIENT_ID missing from Render environment!")
+                print("\n❌ CRITICAL: GOOGLE_CLIENT_ID missing on Render!")
             if not self.GOOGLE_CLIENT_SECRET:
-                print("❌ CRITICAL: GOOGLE_CLIENT_SECRET missing from Render environment!")
-            if not self.GOOGLE_REDIRECT_URI:
-                print("❌ CRITICAL: GOOGLE_REDIRECT_URI not calculated!")
+                print("❌ CRITICAL: GOOGLE_CLIENT_SECRET missing on Render!")
         
         print("="*60 + "\n")

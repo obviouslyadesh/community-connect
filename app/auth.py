@@ -74,33 +74,47 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('main.index'))
 
-
-# In auth.py google_login function:
+# In app/auth.py, update the google_login function:
 @auth.route('/auth/google')
 def google_login():
-    """Initiate Google OAuth flow - USING OAUTH.PY"""
+    """Initiate Google OAuth flow"""
     try:
         from app.oauth import GoogleOAuth
+        import secrets
         
-        # Get authorization URL and state
-        auth_url, state = GoogleOAuth.get_authorization_url()
+        # Get config
+        client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+        redirect_uri = current_app.config.get('GOOGLE_REDIRECT_URI')
         
-        # Store state in session
+        if not client_id or not redirect_uri:
+            flash('OAuth not configured. Please contact support.', 'error')
+            return redirect(url_for('auth.login'))
+        
+        # Generate state
+        state = secrets.token_urlsafe(16)
         session['oauth_state'] = state
         
-        print(f"\n✅ Generated URL via oauth.py:")
+        # Build URL manually (or use GoogleOAuth.get_authorization_url())
+        from urllib.parse import urlencode
+        params = {
+            'client_id': client_id,
+            'redirect_uri': redirect_uri,
+            'response_type': 'code',
+            'scope': 'openid email profile',
+            'access_type': 'offline',
+            'prompt': 'consent',
+            'state': state
+        }
+        
+        auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
+        
+        print(f"\n✅ Google OAuth URL:")
         print(f"{auth_url}")
         
         return redirect(auth_url)
         
-    except ValueError as e:
-        print(f"❌ Configuration error: {e}")
-        flash('OAuth configuration error. Please contact support.', 'error')
-        return redirect(url_for('auth.login'))
     except Exception as e:
         print(f"❌ Google login error: {e}")
-        import traceback
-        traceback.print_exc()
         flash('Failed to connect to Google. Please try again.', 'error')
         return redirect(url_for('auth.login'))
     
