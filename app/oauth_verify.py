@@ -247,3 +247,31 @@ def create_verify_template():
 
 # Call this when the blueprint is initialized
 create_verify_template()
+
+@oauth_verify_bp.route('/debug-client-secret')
+def debug_client_secret():
+    """Debug endpoint to check client secret (BE CAREFUL WITH THIS)"""
+    config = current_app.config
+    client_secret = config.get('GOOGLE_CLIENT_SECRET', 'NOT SET')
+    
+    return f"""
+    <html>
+        <head><title>Client Secret Debug</title></head>
+        <body>
+            <h1>Client Secret Debug</h1>
+            <p><strong>Is Set:</strong> {'✅ YES' if client_secret and client_secret != 'NOT SET' else '❌ NO'}</p>
+            <p><strong>Length:</strong> {len(client_secret) if client_secret and client_secret != 'NOT SET' else 0}</p>
+            <p><strong>First 5 chars:</strong> {client_secret[:5] if client_secret and client_secret != 'NOT SET' else 'N/A'}</p>
+            <p><strong>Last 5 chars:</strong> {client_secret[-5:] if client_secret and client_secret != 'NOT SET' else 'N/A'}</p>
+            <hr>
+            <h3>Common Issues:</h3>
+            <ol>
+                <li>Copy the secret WITHOUT quotes</li>
+                <li>No spaces at beginning or end</li>
+                <li>Click "Save Changes" on Render</li>
+                <li>Wait 2 minutes after saving</li>
+            </ol>
+            <a href="/verify-oauth">← Back to Verification</a>
+        </body>
+    </html>
+    """

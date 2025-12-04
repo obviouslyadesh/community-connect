@@ -1,54 +1,53 @@
-# deploy_verify.py - NEW FILE
-import os
-import sys
+# test_user_model.py - Create in root directory
+from app import create_app, db
+from app.models import User
 
-print("🚀 DEPLOYMENT VERIFICATION FOR RENDER")
-print("="*70)
+app = create_app()
 
-print("\n📋 Checking configuration files...")
-
-# Check config.py
-with open('config.py', 'r') as f:
-    content = f.read()
-    if 'community-connect-project.onrender.com' in content:
-        print("✅ config.py has correct Render URL")
+with app.app_context():
+    print("\n" + "="*60)
+    print("🧪 TESTING USER MODEL")
+    print("="*60)
+    
+    # Test 1: Check if User class exists and has methods
+    print("\n📋 User class methods:")
+    methods = [m for m in dir(User) if not m.startswith('_')]
+    for method in methods:
+        print(f"  - {method}")
+    
+    # Test 2: Check if get_or_create_google_user exists
+    if hasattr(User, 'get_or_create_google_user'):
+        print(f"\n✅ User.get_or_create_google_user exists!")
     else:
-        print("❌ config.py needs URL update")
-
-# Check render.yaml
-with open('render.yaml', 'r') as f:
-    content = f.read()
-    if 'community-connect-project' in content:
-        print("✅ render.yaml has correct service name")
-    else:
-        print("❌ render.yaml needs service name update")
-
-print("\n🔧 Required Environment Variables for Render:")
-print("""
-1. SECRET_KEY (auto-generated)
-2. DATABASE_URL (auto-generated)
-3. GOOGLE_CLIENT_ID (YOU MUST SET THIS)
-4. GOOGLE_CLIENT_SECRET (YOU MUST SET THIS)
-5. GOOGLE_REDIRECT_URI (already in render.yaml)
-""")
-
-print("\n📍 Your Render URLs:")
-print("   Application: https://community-connect-project.onrender.com")
-print("   OAuth Callback: https://community-connect-project.onrender.com/auth/google/callback")
-
-print("\n🔐 Google Cloud Console Setup:")
-print("""
-1. Go to: https://console.cloud.google.com/apis/credentials
-2. Edit your OAuth 2.0 Client ID
-3. Add to Authorized JavaScript origins:
-   - https://community-connect-project.onrender.com
-4. Add to Authorized redirect URIs:
-   - https://community-connect-project.onrender.com/auth/google/callback
-5. Save and wait 5-10 minutes
-""")
-
-print("\n✅ After deployment, visit:")
-print("   https://community-connect-project.onrender.com/verify-oauth")
-print("   to verify your OAuth configuration")
-
-print("\n" + "="*70)
+        print(f"\n❌ ERROR: User.get_or_create_google_user NOT FOUND!")
+    
+    # Test 3: Try to create a test Google user
+    print("\n🧪 Testing get_or_create_google_user with sample data:")
+    test_data = {
+        'sub': 'test_google_id_123',
+        'email': 'test_google_user@example.com',
+        'name': 'Test Google User',
+        'given_name': 'Test',
+        'family_name': 'User',
+        'picture': 'https://example.com/photo.jpg'
+    }
+    
+    try:
+        user = User.get_or_create_google_user(test_data)
+        print(f"✅ Test successful! User created/retrieved:")
+        print(f"   ID: {user.id}")
+        print(f"   Username: {user.username}")
+        print(f"   Email: {user.email}")
+        print(f"   Google ID: {user.google_id}")
+    except Exception as e:
+        print(f"❌ Test failed: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    # Test 4: Count users
+    user_count = User.query.count()
+    print(f"\n📊 Total users in database: {user_count}")
+    
+    print("\n" + "="*60)
+    print("TEST COMPLETE")
+    print("="*60)

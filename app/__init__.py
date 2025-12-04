@@ -1,106 +1,102 @@
-# app/__init__.py - COMPLETE FIXED VERSION
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from dotenv import load_dotenv
-import os
+# app/models.py - COMPLETE FIXED VERSION
+from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
+from app import db, login_manager
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Initialize extensions
-db = SQLAlchemy()
-login_manager = LoginManager()
-login_manager.login_view = 'auth.login'
-login_manager.login_message_category = 'info'
-
-# Import User model for the user_loader
-from app.models import User
-
-@login_manager.user_loader
-def load_user(user_id):
-    """Load user by ID for Flask-Login - FIXED VERSION"""
-    try:
-        # Debug logging
-        if not user_id or user_id == 'None' or user_id == 'none':
-            print(f"⚠️  Warning: Invalid user_id received in load_user: {repr(user_id)}")
-            return None
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256))
+    user_type = db.Column(db.String(20), nullable=False, default='volunteer')
+    is_admin = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Google OAuth fields
+    google_id = db.Column(db.String(120), unique=True, nullable=True)
+    picture = db.Column(db.String(500), nullable=True)
+    given_name = db.Column(db.String(64), nullable=True)
+    family_name = db.Column(db.String(64), nullable=True)
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+    @classmethod
+    def get_or_create_google_user(cls, google_data):
+        """Get existing user by Google ID or create new one"""
+        from app import db
         
-        # Convert to int
-        user_id_int = int(user_id)
+        print(f"\n🔄 get_or_create_google_user called")
+        print(f"   Google data keys: {list(google_data.keys())}")
+        print(f"   Email: {google_data.get('email')}")
+        print(f"   Google ID (sub): {google_data.get('sub')}")
         
-        # Load user
-        user = User.query.get(user_id_int)
+        # Check if user exists by Google ID
+        if 'sub' in google_data:
+            user = cls.query.filter_by(google_id=google_data['sub']).first()
+            if user:
+                print(f"✅ Found existing user by Google ID: {user.email}")
+                return user
         
-        if not user:
-            print(f"⚠️  Warning: No user found with id: {user_id_int}")
+        # Check if user exists by email
+        if 'email' in google_data:
+            user = cls.query.filter_by(email=google_data['email']).first()
+            if user:
+                print(f"✅ Found existing user by email: {user.email}")
+                # Link Google account to existing user
+                if 'sub' in google_data:
+                    user.google_id = google_data['sub']
+                db.session.commit()
+                return user
         
+        # Create new user
+        print(f"🔄 Creating new user for: {google_data.get('email')}")
+        
+        # Generate username from email
+        email = google_data.get('email', '')
+        if email:
+            email_username = email.split('@')[0]
+        else:
+            email_username = 'google_user'
+        
+        username = email_username
+        
+        # Ensure username is unique
+        counter = 1
+        while cls.query.filter_by(username=username).first():
+            username = f"{email_username}{counter}"
+            counter += 1
+        
+        # Create user with available data
+        user_data = {
+            'username': username,
+            'email': email,
+            'user_type': 'volunteer'
+        }
+        
+        if 'sub' in google_data:
+            user_data['google_id'] = google_data['sub']
+        if 'picture' in google_data:
+            user_data['picture'] = google_data['picture']
+        if 'given_name' in google_data:
+            user_data['given_name'] = google_data['given_name']
+        if 'family_name' in google_data:
+            user_data['family_name'] = google_data['family_name']
+        
+        user = cls(**user_data)
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        print(f"✅ Created new user: {user.username} (ID: {user.id})")
         return user
-        
-    except ValueError as e:
-        print(f"❌ ValueError in load_user: Cannot convert '{user_id}' to int: {e}")
-        return None
-    except Exception as e:
-        print(f"❌ Unexpected error in load_user for id '{user_id}': {e}")
-        import traceback
-        traceback.print_exc()
-        return None
+    
+    def __repr__(self):
+        return f'<User {self.username}>'
 
-def create_app(config_class='config.Config'):
-    """Application factory function"""
-    app = Flask(__name__)
-    
-    # Load configuration
-    app.config.from_object(config_class)
-    
-    # DEBUG: Print Google OAuth configuration
-    print("\n" + "="*60)
-    print("🔥 GOOGLE OAUTH CONFIGURATION CHECK")
-    print("="*60)
-    
-    client_id = app.config.get('GOOGLE_CLIENT_ID', 'NOT SET')
-    print(f"GOOGLE_CLIENT_ID: {client_id}")
-    
-    if client_id and '329204650680' in client_id:
-        print("✅ SUCCESS: Real Client ID loaded!")
-    elif client_id and 'your-google-client-id' in client_id:
-        print("❌ ERROR: Using placeholder Client ID!")
-    else:
-        print(f"⚠️  Client ID: {client_id}")
-    
-    redirect_uri = app.config.get('GOOGLE_REDIRECT_URI', 'NOT SET')
-    print(f"Redirect URI: {redirect_uri}")
-    
-    # Check if on Render
-    if os.environ.get('RENDER'):
-        print("🚀 Running on RENDER")
-        expected_uri = "https://community-connect-project.onrender.com/auth/google/callback"
-        if redirect_uri != expected_uri:
-            print(f"❌ WARNING: Redirect URI mismatch!")
-            print(f"   Current: {redirect_uri}")
-            print(f"   Expected: {expected_uri}")
-    else:
-        print("💻 Running locally")
-    
-    print("="*60 + "\n")
-    
-    # Initialize extensions with app
-    db.init_app(app)
-    login_manager.init_app(app)
-    
-    # Import and register blueprints
-    from app.auth import auth as auth_bp
-    from app.routes import main as main_bp
-    
-    # Import oauth_verify blueprint
-    from app.oauth_verify import oauth_verify_bp
-    
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(main_bp)
-    app.register_blueprint(oauth_verify_bp)  # Register verification blueprint
-    
-    # Create database tables
-    with app.app_context():
-        db.create_all()
-    
-    return app
