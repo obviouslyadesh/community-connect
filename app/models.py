@@ -32,54 +32,71 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
     
-    @classmethod
-    def get_or_create_google_user(cls, google_data):
-        """Get existing user by Google ID or create new one"""
-        # Check if user exists by Google ID
-        user = cls.query.filter_by(google_id=google_data['sub']).first()
-        
-        if user:
-            # Update user info if needed
-            user.email = google_data.get('email', user.email)
-            user.picture = google_data.get('picture', user.picture)
-            user.given_name = google_data.get('given_name', user.given_name)
-            user.family_name = google_data.get('family_name', user.family_name)
-            return user
-        
-        # Check if user exists by email (in case they signed up manually first)
-        user = cls.query.filter_by(email=google_data['email']).first()
-        if user:
-            # Link Google account to existing user
-            user.google_id = google_data['sub']
+
+# In app/models.py, update the get_or_create_google_user method:
+@classmethod
+def get_or_create_google_user(cls, google_data):
+    """Get existing user by Google ID or create new one - FIXED"""
+    from app import db
+    
+    # Check if user exists by Google ID
+    user = cls.query.filter_by(google_id=google_data['sub']).first()
+    
+    if user:
+        print(f"✅ Found existing user by Google ID: {user.email}")
+        # Update user info if needed
+        if google_data.get('picture') and not user.picture:
             user.picture = google_data.get('picture')
+        if google_data.get('given_name') and not user.given_name:
             user.given_name = google_data.get('given_name')
+        if google_data.get('family_name') and not user.family_name:
             user.family_name = google_data.get('family_name')
-            return user
         
-        # Create new user
-        username = google_data.get('email', '').split('@')[0]
-        # Make sure username is unique
-        base_username = username
-        counter = 1
-        while cls.query.filter_by(username=username).first():
-            username = f"{base_username}{counter}"
-            counter += 1
-        
-        user = cls(
-            username=username,
-            email=google_data['email'],
-            google_id=google_data['sub'],
-            picture=google_data.get('picture'),
-            given_name=google_data.get('given_name'),
-            family_name=google_data.get('family_name'),
-            user_type='volunteer'  # Default to volunteer
-        )
-        
-        db.session.add(user)
+        db.session.commit()
         return user
     
-    def __repr__(self):
-        return f'<User {self.username}>'
+    # Check if user exists by email (in case they signed up manually first)
+    user = cls.query.filter_by(email=google_data['email']).first()
+    if user:
+        print(f"✅ Found existing user by email: {user.email}")
+        # Link Google account to existing user
+        user.google_id = google_data['sub']
+        user.picture = google_data.get('picture')
+        user.given_name = google_data.get('given_name')
+        user.family_name = google_data.get('family_name')
+        
+        db.session.commit()
+        return user
+    
+    # Create new user
+    print(f"🔄 Creating new user for email: {google_data['email']}")
+    
+    # Generate username from email
+    email_username = google_data['email'].split('@')[0]
+    username = email_username
+    
+    # Ensure username is unique
+    counter = 1
+    while cls.query.filter_by(username=username).first():
+        username = f"{email_username}{counter}"
+        counter += 1
+    
+    user = cls(
+        username=username,
+        email=google_data['email'],
+        google_id=google_data['sub'],
+        picture=google_data.get('picture'),
+        given_name=google_data.get('given_name'),
+        family_name=google_data.get('family_name'),
+        user_type='volunteer'  # Default to volunteer
+    )
+    
+    # IMPORTANT: Add and commit immediately
+    db.session.add(user)
+    db.session.commit()
+    
+    print(f"✅ Created new user: {user.username} (ID: {user.id})")
+    return user
 
 @login_manager.user_loader
 def load_user(id):

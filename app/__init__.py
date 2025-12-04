@@ -1,4 +1,4 @@
-# app/__init__.py - COMPLETE UPDATED VERSION
+# app/__init__.py - COMPLETE FIXED VERSION
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -19,8 +19,32 @@ from app.models import User
 
 @login_manager.user_loader
 def load_user(user_id):
-    """Load user by ID for Flask-Login"""
-    return User.query.get(int(user_id))
+    """Load user by ID for Flask-Login - FIXED VERSION"""
+    try:
+        # Debug logging
+        if not user_id or user_id == 'None' or user_id == 'none':
+            print(f"⚠️  Warning: Invalid user_id received in load_user: {repr(user_id)}")
+            return None
+        
+        # Convert to int
+        user_id_int = int(user_id)
+        
+        # Load user
+        user = User.query.get(user_id_int)
+        
+        if not user:
+            print(f"⚠️  Warning: No user found with id: {user_id_int}")
+        
+        return user
+        
+    except ValueError as e:
+        print(f"❌ ValueError in load_user: Cannot convert '{user_id}' to int: {e}")
+        return None
+    except Exception as e:
+        print(f"❌ Unexpected error in load_user for id '{user_id}': {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 def create_app(config_class='config.Config'):
     """Application factory function"""
