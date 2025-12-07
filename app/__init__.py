@@ -32,15 +32,13 @@ def create_app(config_class='config.Config'):
     login_manager.init_app(app)
     
     # Import blueprints only when needed
-    @app.before_first_request
-    def setup_blueprints():
-        from app.auth import auth as auth_bp
-        from app.routes import main as main_bp
-        from app.oauth_verify import oauth_verify_bp
+    from app.auth import auth as auth_bp
+    from app.routes import main as main_bp
+    from app.oauth_verify import oauth_verify_bp
         
-        app.register_blueprint(auth_bp)
-        app.register_blueprint(main_bp)
-        app.register_blueprint(oauth_verify_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(main_bp)
+    app.register_blueprint(oauth_verify_bp)
     
     # Don't create tables on startup (do in init_production_db.py)
     # This saves memory
