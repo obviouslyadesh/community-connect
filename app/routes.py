@@ -481,5 +481,21 @@ def test_google_oauth():
     </body>
     </html>
     """
+
+# In app/routes.py
 import psutil
 import os
+
+@main.route('/health')
+def health_check():
+    """Health check with memory info"""
+    process = psutil.Process(os.getpid())
+    memory_info = process.memory_info()
+    
+    return {
+        'status': 'healthy',
+        'memory_mb': round(memory_info.rss / 1024 / 1024, 2),
+        'memory_percent': round(process.memory_percent(), 2),
+        'workers': 1,
+        'database': 'connected'  # Add actual DB check
+    }, 200
