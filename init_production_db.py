@@ -1,30 +1,27 @@
-# init_production_db.py - UPDATED VERSION
+# init_production_db.py - SAFE PRODUCTION INITIALIZATION
 from app import create_app, db
-from app.models import User
+from app.models import User, PasswordResetToken, Event, EventVolunteer
 from sqlalchemy import inspect
+import traceback
 
 def init_production_db():
-    print("🚀 Production Database Initialization Starting...")
+    print("🚀 Production Database Initialization")
+    print("="*60)
     
     app = create_app()
     
     with app.app_context():
         try:
-            # Check what tables already exist
             inspector = inspect(db.engine)
             existing_tables = inspector.get_table_names()
             
             print(f"📊 Existing tables: {existing_tables}")
             
-            # Only create tables if they don't exist
-            if not existing_tables:
-                print("🔄 Creating all tables...")
-                db.create_all()
-                print("✅ Database tables created")
-            else:
-                print("✅ Tables already exist, skipping creation")
+            # Create all tables (handles missing ones only)
+            db.create_all()
+            print("✅ Database tables verified/created")
             
-            # Check if admin user exists
+            # Check for admin user
             admin = User.query.filter_by(username='admin').first()
             if not admin:
                 admin = User(
@@ -40,29 +37,20 @@ def init_production_db():
             else:
                 print("⚠️  Admin user already exists")
             
-            # Check if Google OAuth columns exist
-            if 'users' in existing_tables:
-                columns = [col['name'] for col in inspector.get_columns('users')]
-                print(f"\n📋 Users table columns: {columns}")
-                
-                # Check for required Google columns
-                required_columns = ['google_id', 'picture', 'given_name', 'family_name']
-                missing = [col for col in required_columns if col not in columns]
-                
-                if missing:
-                    print(f"⚠️  Missing Google OAuth columns: {missing}")
-                    print("   These will be added when models are updated")
+            # Verify all models have tables
+            required_tables = ['users', 'password_reset_tokens', 'events', 'event_volunteers']
+            for table in required_tables:
+                if table in existing_tables:
+                    print(f"✅ {table} table exists")
                 else:
-                    print("✅ All Google OAuth columns present")
+                    print(f"⚠️  {table} table missing (should be created)")
             
-            print("🎉 Database initialization complete!")
+            print("\n🎉 Database initialization complete!")
             
         except Exception as e:
-            print(f"❌ Initialization error: {e}")
-            import traceback
+            print(f"❌ Database initialization error: {e}")
             traceback.print_exc()
-            # Don't crash the build - just log the error
-            print("⚠️  Continuing despite error...")
+            print("⚠️  Continuing deployment...")
 
 if __name__ == '__main__':
     init_production_db()

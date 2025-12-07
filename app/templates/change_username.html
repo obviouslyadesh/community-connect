@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Change Username - Community Connect{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Change Username</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">Your current username: <strong>{{ current_user.username }}</strong></p>
+                    
+                    <form method="POST" action="{{ url_for('auth.change_username') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group mb-3">
+                            <label for="new_username" class="form-label">New Username</label>
+                            {{ form.new_username(class="form-control", placeholder="Enter new username") }}
+                            {% for error in form.new_username.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                            <small class="form-text text-muted">Username must be 3-80 characters long.</small>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                {{ form.submit.label.text }}
+                            </button>
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

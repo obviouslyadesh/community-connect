@@ -54,18 +54,29 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                            <!-- START: ADDED LINKS -->
+                            <li><a class="dropdown-item" href="{{ url_for('auth.change_username') }}">Change Username</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.change_password') }}">Change Password</a></li>
                             <li><hr class="dropdown-divider"></li>
+                            <!-- END: ADDED LINKS -->
                             <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
                         </ul>
                     </li>
-                    {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.register') }}">Register</a>
-                    </li>
-                    {% endif %}
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.login') }}">
+                        Login
+                        <!-- START: ADDED LOGIN LINK EXTRA -->
+                        <div class="auth-links small text-muted text-center" style="line-height: 1;">
+                            <a href="{{ url_for('auth.forgot_password') }}" class="text-white-50">Forgot Password?</a>
+                        </div>
+                        <!-- END: ADDED LOGIN LINK EXTRA -->
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.register') }}">Register</a>
+                </li>
+                {% endif %}
                 </ul>
             </div>
         </div>
