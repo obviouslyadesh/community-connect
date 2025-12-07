@@ -9,7 +9,7 @@ services:
       pip install -r requirements.txt
       python init_production_db.py
       python update_db_schema.py 
-    startCommand: gunicorn run:app
+    startCommand: ./boot.sh
     envVars:
       - key: SECRET_KEY
         generateValue: true
@@ -49,7 +49,7 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python init_production_db.py
-    startCommand: gunicorn run:app
+    startCommand: ./boot.sh
     envVars:
       # Flask & Security
       - key: SECRET_KEY

@@ -481,105 +481,19 @@ def test_google_oauth():
     </body>
     </html>
     """
+import psutil
+import os
 
-# =================== DEBUG ROUTES ===================
-# @main.route('/debug-events')
-# def debug_events():
-#     try:
-#         events = Event.query.all()
-#         users = User.query.all()
-        
-#         events_info = ""
-#         for event in events:
-#             events_info += f"""
-#             <div style="border: 1px solid #ccc; padding: 10px; margin: 10px;">
-#                 <strong>{event.title}</strong><br>
-#                 ID: {event.id} | Organizer: {event.organizer.username}<br>
-#                 Date: {event.date} | Volunteers: {event.volunteers_count()}/{event.max_volunteers}
-#             </div>
-#             """
-        
-#         users_info = ""
-#         for user in users:
-#             users_info += f"<li>{user.username} ({user.user_type}) - ID: {user.id}</li>"
-        
-#         return f"""
-#         <h2>Events Debug</h2>
-#         <h3>Existing Events ({len(events)}):</h3>
-#         {events_info if events else '<p>No events found</p>'}
-        
-#         <h3>Existing Users ({len(users)}):</h3>
-#         <ul>{users_info}</ul>
-        
-#         <h3>Actions:</h3>
-#         <a href="/events/create" class="btn btn-primary">Create Event</a>
-#         <a href="/debug-db" class="btn btn-secondary">Database Debug</a>
-#         """
-        
-#     except Exception as e:
-#         return f"<h2>Error</h2><p>{str(e)}</p>"
-
-# @main.route('/debug-create-test-event')
-# @login_required
-# def debug_create_test_event():
-#     from datetime import datetime, timedelta
+@main.route('/health')
+def health_check():
+    """Health check with memory info"""
+    process = psutil.Process(os.getpid())
+    memory_info = process.memory_info()
     
-#     try:
-#         test_event = Event(
-#             title="Test Event - Debug",
-#             description="This is a test event created for debugging",
-#             date=datetime.utcnow() + timedelta(days=1),
-#             address="123 Test Street",
-#             city="Test City",
-#             state="TS",
-#             zip_code="12345",
-#             max_volunteers=5,
-#             organizer_id=current_user.id
-#         )
-        
-#         db.session.add(test_event)
-#         db.session.commit()
-        
-#         return f"""
-#         <h2>Test Event Created Successfully!</h2>
-#         <p>Event: {test_event.title}</p>
-#         <p>Organizer: {current_user.username}</p>
-#         <p><a href="/debug-events">View All Events</a></p>
-#         """
-        
-#     except Exception as e:
-#         return f"<h2>Error Creating Test Event</h2><p>{str(e)}</p>"
-    
-# @main.route('/debug-users')
-# def debug_users():
-#     try:
-#         users = User.query.all()
-#         user_list = ""
-#         for user in users:
-#             admin_status = " (ADMIN)" if user.is_admin else ""
-#             user_list += f"<li>{user.username}{admin_status} - {user.email} - {user.user_type}</li>"
-        
-#         return f"""
-#         <h2>Current Users in Database</h2>
-#         <ul>{user_list if users else 'No users found'}</ul>
-#         <p><a href="/register">Register New User</a></p>
-#         <p><a href="/debug-db">Database Info</a></p>
-#         """
-#     except Exception as e:
-#         return f"<h2>Error</h2><p>{str(e)}</p>"
-    
-# @main.route('/reset-user-password/<username>/<new_password>')
-# def reset_user_password(username, new_password):
-#     """Emergency password reset (use carefully!)"""
-    
-#     secret_key = request.args.get('key', '')
-#     if secret_key != 'emergency2024':
-#         return "Invalid access", 403
-    
-#     user = User.query.filter_by(username=username).first()
-#     if user:
-#         user.set_password(new_password)
-#         db.session.commit()
-#         return f"✅ Password reset for {username} to: {new_password}"
-#     else:
-#         return f"❌ User {username} not found"
+    return {
+        'status': 'healthy',
+        'memory_mb': round(memory_info.rss / 1024 / 1024, 2),
+        'memory_percent': round(process.memory_percent(), 2),
+        'workers': 1,
+        'database': 'connected'  # Add actual DB check
+    }, 200

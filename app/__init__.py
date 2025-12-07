@@ -14,68 +14,36 @@ login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
 
-# In app/__init__.py, update the create_app function:
+# In create_app() function:
 def create_app(config_class='config.Config'):
-    """Application factory function"""
     app = Flask(__name__)
     
-    # Load configuration
+    # Load config
     app.config.from_object(config_class)
     
-    # DEBUG: Print Google OAuth configuration
-    print("\n" + "="*60)
-    print("🔥 GOOGLE OAUTH CONFIGURATION CHECK")
-    print("="*60)
+    # Fix PostgreSQL URL
+    if app.config.get('SQLALCHEMY_DATABASE_URI', '').startswith('postgres://'):
+        app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace(
+            'postgres://', 'postgresql://', 1
+        )
     
-    client_id = app.config.get('GOOGLE_CLIENT_ID', 'NOT SET')
-    print(f"GOOGLE_CLIENT_ID: {client_id}")
-    
-    if client_id and '329204650680' in client_id:
-        print("✅ SUCCESS: Real Client ID loaded!")
-    elif client_id and 'your-google-client-id' in client_id:
-        print("❌ ERROR: Using placeholder Client ID!")
-    else:
-        print(f"⚠️  Client ID: {client_id}")
-    
-    redirect_uri = app.config.get('GOOGLE_REDIRECT_URI', 'NOT SET')
-    print(f"Redirect URI: {redirect_uri}")
-    
-    # Check if on Render
-    if os.environ.get('RENDER'):
-        print("🚀 Running on RENDER")
-        expected_uri = "https://community-connect-project.onrender.com/auth/google/callback"
-        if redirect_uri != expected_uri:
-            print(f"❌ WARNING: Redirect URI mismatch!")
-            print(f"   Current: {redirect_uri}")
-            print(f"   Expected: {expected_uri}")
-    else:
-        print("💻 Running locally")
-    
-    print("="*60 + "\n")
-    
-    # Initialize extensions with app
+    # Initialize with minimal settings
     db.init_app(app)
     login_manager.init_app(app)
     
-    # Import and register blueprints
-    from app.auth import auth as auth_bp
-    from app.routes import main as main_bp
+    # Import blueprints only when needed
+    @app.before_first_request
+    def setup_blueprints():
+        from app.auth import auth as auth_bp
+        from app.routes import main as main_bp
+        from app.oauth_verify import oauth_verify_bp
+        
+        app.register_blueprint(auth_bp)
+        app.register_blueprint(main_bp)
+        app.register_blueprint(oauth_verify_bp)
     
-    # Import oauth_verify blueprint
-    from app.oauth_verify import oauth_verify_bp
-    
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(main_bp)
-    app.register_blueprint(oauth_verify_bp)
-    
-    # Create database tables - WITH ERROR HANDLING
-    with app.app_context():
-        try:
-            db.create_all()
-            print("✅ Database tables created/verified")
-        except Exception as e:
-            print(f"⚠️  Note: Database table creation error (tables may already exist): {e}")
-            # Don't crash - tables likely already exist
+    # Don't create tables on startup (do in init_production_db.py)
+    # This saves memory
     
     return app
 
