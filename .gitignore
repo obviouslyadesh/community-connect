@@ -4,3 +4,28 @@ __pycache__/
 *.pyc
 instance/
 flask_session/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Instance folder (Flask)
+instance/
+
+# Environment variables
+.env
+.env.*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
