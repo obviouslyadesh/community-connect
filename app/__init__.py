@@ -1,11 +1,9 @@
-# app/__init__.py - Application factory
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from dotenv import load_dotenv
 import os
 
-# Load environment variables from .env file
 load_dotenv()
 
 # Initialize extensions

@@ -1,7 +1,7 @@
-# app/auth.py - UPDATED WITH NEW FEATURES
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.urls import url_parse
 from app import db
 from app.forms import LoginForm, RegistrationForm, ForgotPasswordForm, ResetPasswordForm, ChangeUsernameForm, ChangePasswordForm
 from app.oauth import GoogleOAuth
@@ -13,6 +13,8 @@ from urllib.parse import urlencode
 from app.models import User, PasswordResetToken
 
 auth = Blueprint('auth', __name__)
+
+
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -165,7 +167,7 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('main.index'))
 
-# GOOGLE OAUTH (Keep existing)
+# GOOGLE OAUTH 
 @auth.route('/auth/google')
 def google_login():
     try:
@@ -231,7 +233,7 @@ def google_callback():
         flash(f'Failed to login with Google: {str(e)}', 'error')
         return redirect(url_for('auth.login'))
 
-# DEBUG ROUTES (Keep existing)
+# DEBUG ROUTES
 @auth.route('/debug/session')
 def debug_session():
     from app.models import User

@@ -1,11 +1,8 @@
-# run.py
 import os
 from dotenv import load_dotenv
 
-# Load .env file BEFORE importing app
 load_dotenv()
 
-# Check if .env is loaded
 print("🔍 CHECKING .env LOADING")
 print(f"Working directory: {os.getcwd()}")
 print(f".env exists: {os.path.exists('.env')}")
@@ -20,7 +17,7 @@ if os.path.exists('.env'):
 
 print("\n" + "="*60)
 
-# Now import and create app
+# Import and create app
 from app import create_app
 
 app = create_app()

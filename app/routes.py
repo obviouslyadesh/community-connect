@@ -291,7 +291,6 @@ def admin_events():
     events = Event.query.order_by(Event.date.asc()).all()
     return render_template('admin_events.html', events=events)
 
-# REMOVED: @main.route('/admin/passwords') - This was the old developer mode feature
 
 # =================== ADMIN API ROUTES ===================
 @main.route('/api/admin/user/<int:user_id>/toggle-admin', methods=['POST'])
@@ -438,14 +437,13 @@ def delete_event(event_id):
     else:
         return redirect(url_for('main.events'))
     
-# Add to app/routes.py
 @main.route('/test-google-oauth')
 def test_google_oauth():
     """Direct test of Google OAuth URL generation"""
     from urllib.parse import urlencode
     import secrets
     
-    # Use the same logic as auth.py but return as clickable link
+    # Clickable link
     client_id = "329204650680-0rmc3npi3a3kf1o3cocr4n56dd0so8o3.apps.googleusercontent.com"
     redirect_uri = "https://community-connect-project.onrender.com/auth/google/callback"
     state = secrets.token_urlsafe(16)
@@ -481,21 +479,3 @@ def test_google_oauth():
     </body>
     </html>
     """
-
-# In app/routes.py
-import psutil
-import os
-
-@main.route('/health')
-def health_check():
-    """Health check with memory info"""
-    process = psutil.Process(os.getpid())
-    memory_info = process.memory_info()
-    
-    return {
-        'status': 'healthy',
-        'memory_mb': round(memory_info.rss / 1024 / 1024, 2),
-        'memory_percent': round(process.memory_percent(), 2),
-        'workers': 1,
-        'database': 'connected'  # Add actual DB check
-    }, 200

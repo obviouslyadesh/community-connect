@@ -51,63 +51,6 @@
     </div>
 </div>
 
-<!-- {% if current_user.user_type == 'organization' %} -->
-    <!-- Organization Dashboard
-    <div class="card">
-        <div class="card-header">
-            <h4 class="card-title mb-0">My Events</h4>
-        </div>
-        <div class="card-body">
-            {% if events %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Event Title</th>
-                                <th>Date & Time</th>
-                                <th>Location</th>
-                                <th>Volunteers</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for event in events %}
-                            <tr>
-                                <td>
-                                    <strong>{{ event.title }}</strong>
-                                </td>
-                                <td>{{ event.date.strftime('%m/%d/%Y %I:%M %p') }}</td>
-                                <td>{{ event.city }}, {{ event.state }}</td>
-                                <td>
-                                    <span class="badge bg-{{ 'success' if event.volunteers_count() > 0 else 'secondary' }}">
-                                        {{ event.volunteers_count() }}/{{ event.max_volunteers }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if event.date > now %}
-                                        <span class="badge bg-success">Upcoming</span>
-                                    {% else %}
-                                        <span class="badge bg-warning">Completed</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="{{ url_for('main.event_detail', event_id=event.id) }}" class="btn btn-sm btn-outline-primary">View Details</a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="text-center py-4">
-                    <h5>No events created yet</h5>
-                    <p class="text-muted">Create your first event to start connecting with volunteers!</p>
-                    <a href="{{ url_for('main.create_event') }}" class="btn btn-primary">Create Your First Event</a>
-                </div>
-            {% endif %}
-        </div>
-    </div> -->
 
 {% if current_user.user_type == 'organization' %}
     <div class="card">
