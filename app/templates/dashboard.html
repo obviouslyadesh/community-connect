@@ -51,7 +51,6 @@
     </div>
 </div>
 
-
 {% if current_user.user_type == 'organization' %}
     <div class="card">
         <div class="card-header">
@@ -125,9 +124,8 @@
             {% endif %}
         </div>
     </div>
-{% endif %}
 
-{% else %}
+{% elif current_user.user_type == 'volunteer' %}
     <!-- Volunteer Dashboard -->
     <div class="card">
         <div class="card-header">
