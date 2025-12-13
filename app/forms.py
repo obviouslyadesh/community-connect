@@ -1,4 +1,3 @@
-# app/forms.py - UPDATED WITH NEW FORMS
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, TextAreaField, DateTimeField, IntegerField, SelectField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError, NumberRange

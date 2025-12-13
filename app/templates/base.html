@@ -14,7 +14,7 @@
     
     {% block styles %}{% endblock %}
 </head>
-<body class="bg-light d-flex flex-column min-vh-100">  <!-- Added flex classes for footer -->
+<body class="bg-light d-flex flex-column min-vh-100"> 
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
         <div class="container">
@@ -54,11 +54,9 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-                            <!-- START: ADDED LINKS -->
                             <li><a class="dropdown-item" href="{{ url_for('auth.change_username') }}">Change Username</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('auth.change_password') }}">Change Password</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <!-- END: ADDED LINKS -->
                             <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
                         </ul>
                     </li>
@@ -66,11 +64,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('auth.login') }}">
                         Login
-                        <!-- START: ADDED LOGIN LINK EXTRA -->
                         <div class="auth-links small text-muted text-center" style="line-height: 1;">
                             <a href="{{ url_for('auth.forgot_password') }}" class="text-white-50">Forgot Password?</a>
                         </div>
-                        <!-- END: ADDED LOGIN LINK EXTRA -->
                     </a>
                 </li>
                 <li class="nav-item">
@@ -83,7 +79,7 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="container my-4 flex-grow-1">  <!-- Added flex-grow-1 -->
+    <main class="container my-4 flex-grow-1"> 
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}

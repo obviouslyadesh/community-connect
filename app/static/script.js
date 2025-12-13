@@ -1,6 +1,5 @@
-// Community Connect Custom JavaScript
 document.addEventListener('DOMContentLoaded', function() {
-    // Add fade-in animation to cards
+    // Fade-in animation to cards
     const cards = document.querySelectorAll('.card');
     cards.forEach((card, index) => {
         card.style.animationDelay = `${index * 0.1}s`;
@@ -78,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.body.appendChild(notification);
         
-        // Auto remove after 5 seconds
+        // Auto remove after 5 seconds 
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.remove();

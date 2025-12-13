@@ -1,20 +1,15 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.urls import url_parse
 from app import db
 from app.forms import LoginForm, RegistrationForm, ForgotPasswordForm, ResetPasswordForm, ChangeUsernameForm, ChangePasswordForm
 from app.oauth import GoogleOAuth
 from app.email import send_password_reset_email
-import requests
-import json
 import secrets
 from urllib.parse import urlencode
 from app.models import User, PasswordResetToken
 
 auth = Blueprint('auth', __name__)
-
-
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -26,11 +21,9 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         
         if user and user.check_password(form.password.data):
-            # Use remember parameter
             login_user(user, remember=form.remember.data)
             flash('Login successful!', 'success')
             
-            # Redirect to next page or dashboard
             next_page = request.args.get('next')
             if not next_page or url_parse(next_page).netloc != '':
                 next_page = url_for('main.dashboard')
@@ -62,7 +55,6 @@ def register():
     
     return render_template('register.html', form=form)
 
-# FORGOT PASSWORD FLOW
 @auth.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if current_user.is_authenticated:
@@ -73,18 +65,10 @@ def forgot_password():
         user = User.query.filter_by(email=form.email.data).first()
         
         if user:
-            # Generate reset token
             token = user.generate_password_reset_token()
-            
-            # Send email
             send_password_reset_email(user, token)
-            
-            # Always show success message (security best practice)
-            flash('If an account exists with that email, a password reset link has been sent.', 'info')
-        else:
-            # Still show success for security
-            flash('If an account exists with that email, a password reset link has been sent.', 'info')
         
+        flash('If an account exists with that email, a password reset link has been sent.', 'info')
         return redirect(url_for('auth.login'))
     
     return render_template('forgot_password.html', form=form)
@@ -94,7 +78,6 @@ def reset_password(token):
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
     
-    # Verify token
     user = User.verify_password_reset_token(token)
     if not user:
         flash('The password reset link is invalid or has expired.', 'error')
@@ -102,10 +85,8 @@ def reset_password(token):
     
     form = ResetPasswordForm()
     if form.validate_on_submit():
-        # Update password
         user.set_password(form.password.data)
         
-        # Mark token as used
         reset_token = PasswordResetToken.query.filter_by(token=token).first()
         if reset_token:
             reset_token.mark_as_used()
@@ -117,20 +98,17 @@ def reset_password(token):
     
     return render_template('reset_password.html', form=form, token=token)
 
-# USER PROFILE MANAGEMENT
 @auth.route('/profile/change-username', methods=['GET', 'POST'])
 @login_required
 def change_username():
     form = ChangeUsernameForm()
     
     if form.validate_on_submit():
-        # Check if username already exists
         existing_user = User.query.filter_by(username=form.new_username.data).first()
         if existing_user and existing_user.id != current_user.id:
             flash('Username already taken. Please choose another.', 'error')
             return render_template('change_username.html', form=form)
         
-        # Update username
         old_username = current_user.username
         current_user.username = form.new_username.data
         db.session.commit()
@@ -146,12 +124,10 @@ def change_password():
     form = ChangePasswordForm()
     
     if form.validate_on_submit():
-        # Verify current password
         if not current_user.check_password(form.current_password.data):
             flash('Current password is incorrect.', 'error')
             return render_template('change_password.html', form=form)
         
-        # Update password
         current_user.set_password(form.new_password.data)
         db.session.commit()
         
@@ -167,7 +143,6 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('main.index'))
 
-# GOOGLE OAUTH 
 @auth.route('/auth/google')
 def google_login():
     try:
@@ -194,7 +169,7 @@ def google_login():
         auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
         return redirect(auth_url)
         
-    except Exception as e:
+    except Exception:
         flash('Failed to connect to Google. Please try again.', 'error')
         return redirect(url_for('auth.login'))
     
@@ -229,98 +204,6 @@ def google_callback():
         
         return redirect(url_for('main.dashboard'))
         
-    except Exception as e:
-        flash(f'Failed to login with Google: {str(e)}', 'error')
+    except Exception:
+        flash('Failed to login with Google. Please try again.', 'error')
         return redirect(url_for('auth.login'))
-
-# DEBUG ROUTES
-@auth.route('/debug/session')
-def debug_session():
-    from app.models import User
-    
-    current_user_info = {}
-    if current_user.is_authenticated:
-        current_user_info = {
-            'id': current_user.id,
-            'username': current_user.username,
-            'email': current_user.email,
-            'is_authenticated': current_user.is_authenticated
-        }
-    else:
-        current_user_info = {
-            'is_authenticated': False,
-            'id': 'Not logged in',
-            'username': 'Not logged in',
-            'email': 'Not logged in'
-        }
-    
-    session_info = {
-        'session_id': session.get('_id'),
-        'user_id': session.get('user_id'),
-        'user_email': session.get('user_email'),
-        'oauth_state': session.get('oauth_state'),
-        '_fresh': session.get('_fresh'),
-        '_user_id': session.get('_user_id'),
-        '_flashes': session.get('_flashes', [])
-    }
-    
-    user_count = User.query.count()
-    
-    return f"""
-    <html>
-        <head><title>Session Debug</title></head>
-        <body>
-            <h1>Session Debug</h1>
-            <h2>Session Info:</h2>
-            <pre>{json.dumps(session_info, indent=2)}</pre>
-            <h2>Current User:</h2>
-            <pre>{json.dumps(current_user_info, indent=2)}</pre>
-            <h2>Database Info:</h2>
-            <p>Users in database: {user_count}</p>
-            <h3>Test Links:</h3>
-            <ul>
-                <li><a href="/auth/google">Test Google Login</a></li>
-                <li><a href="/debug/users">View All Users</a></li>
-                <li><a href="/fix-session">Fix Session</a></li>
-                <li><a href="/">Home</a></li>
-                <li><a href="/dashboard">Dashboard</a></li>
-            </ul>
-        </body>
-    </html>
-    """
-
-@auth.route('/debug/users')
-def debug_users():
-    from app.models import User
-    users = User.query.all()
-    
-    user_list = []
-    for user in users:
-        user_list.append({
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'google_id': user.google_id,
-            'created_at': user.created_at.isoformat() if user.created_at else None
-        })
-    
-    return f"""
-    <html>
-        <head><title>Users Debug</title></head>
-        <body>
-            <h1>Users in Database ({len(user_list)})</h1>
-            <pre>{json.dumps(user_list, indent=2)}</pre>
-            <hr>
-            <a href="/debug/session">Session Debug</a> | 
-            <a href="/">Home</a>
-        </body>
-    </html>
-    """
-
-@auth.route('/fix-session')
-def fix_session():
-    session.clear()
-    logout_user()
-    session.modified = True
-    flash('Session cleared. Please login again.', 'info')
-    return redirect(url_for('auth.login'))

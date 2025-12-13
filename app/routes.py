@@ -7,12 +7,9 @@ import requests
 from datetime import datetime
 import json
 
-
 main = Blueprint('main', __name__)
 
-# External API functions
 def get_weather_forecast(city):
-    """Get weather forecast using OpenWeatherMap API"""
     try:
         url = f"http://wttr.in/{city}?format=j1"
         response = requests.get(url)
@@ -24,12 +21,10 @@ def get_weather_forecast(city):
                 'desc': current_condition['weatherDesc'][0]['value'],
                 'humidity': current_condition['humidity']
             }
-    except Exception as e:
-        print(f"Weather API error: {e}")
-    return None
+    except Exception:
+        return None
 
 def get_map_embed_url(address):
-    """Generate Google Maps embed URL"""
     address_clean = address.replace(' ', '+')
     return f"https://maps.google.com/maps?q={address_clean}&output=embed"
 
@@ -52,17 +47,13 @@ def create_event():
     
     form = EventForm()
     
-    # Calculate minimum date (5 minutes from now)
     from datetime import datetime, timedelta
     min_date = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%dT%H:%M')
     
     if form.validate_on_submit():
         try:
-            print(f"Form data: {form.data}")
-            
             event_date = datetime.strptime(form.date.data, '%Y-%m-%dT%H:%M')
             
-            # Additional validation in route
             if event_date < datetime.now():
                 flash('Event date must be in the future.', 'error')
                 return render_template('create_event.html', form=form, min_date=min_date)
@@ -87,16 +78,13 @@ def create_event():
             db.session.commit()
             
             flash('Event created successfully!', 'success')
-            print(f"Event created: {event.title} by {current_user.username}")
             return redirect(url_for('main.dashboard'))
             
         except Exception as e:
             db.session.rollback()
             flash(f'Error creating event: {str(e)}', 'error')
-            print(f"Event creation error: {e}")
     
     elif form.errors:
-        print(f"Form errors: {form.errors}")
         flash('Please correct the errors in the form.', 'error')
     
     return render_template('create_event.html', form=form, min_date=min_date)
@@ -209,15 +197,12 @@ def dashboard():
         events = [signup.event for signup in signups]
         return render_template('dashboard.html', events=events, now=datetime.utcnow())
 
-# =================== NEW ADMIN LOGIN SYSTEM ===================
+# ADMIN ROUTES
 @main.route('/admin', methods=['GET', 'POST'])
 def admin_login():
-    """Admin-only login page at /admin"""
-    # If already logged in as admin, redirect to admin dashboard
     if current_user.is_authenticated and current_user.is_admin:
         return redirect(url_for('main.admin_dashboard'))
     
-    # If logged in but not admin, logout first
     if current_user.is_authenticated and not current_user.is_admin:
         logout_user()
         flash('Please login with admin credentials to access admin console.', 'info')
@@ -243,12 +228,10 @@ def admin_login():
 @main.route('/admin/dashboard')
 @login_required
 def admin_dashboard():
-    """Admin dashboard - only accessible by admins"""
     if not current_user.is_admin:
         flash('Admin access required.', 'error')
         return redirect(url_for('main.admin_login'))
     
-    # Admin statistics
     total_users = User.query.count()
     total_events = Event.query.count()
     total_volunteers = User.query.filter_by(user_type='volunteer').count()
@@ -265,12 +248,10 @@ def admin_dashboard():
 @main.route('/admin/logout')
 @login_required
 def admin_logout():
-    """Logout from admin console"""
     logout_user()
     flash('Admin logout successful.', 'info')
     return redirect(url_for('main.index'))
 
-# =================== ADMIN MANAGEMENT ROUTES ===================
 @main.route('/admin/users')
 @login_required
 def admin_users():
@@ -291,8 +272,7 @@ def admin_events():
     events = Event.query.order_by(Event.date.asc()).all()
     return render_template('admin_events.html', events=events)
 
-
-# =================== ADMIN API ROUTES ===================
+# ADMIN API ROUTES
 @main.route('/api/admin/user/<int:user_id>/toggle-admin', methods=['POST'])
 @login_required
 def api_toggle_admin(user_id):
@@ -319,7 +299,6 @@ def api_delete_user(user_id):
     
     user = User.query.get_or_404(user_id)
     
-    # Delete user's data
     Event.query.filter_by(organizer_id=user_id).delete()
     EventVolunteer.query.filter_by(volunteer_id=user_id).delete()
     
@@ -328,7 +307,7 @@ def api_delete_user(user_id):
     
     return jsonify({'message': f'User {user.username} deleted successfully'})
 
-# =================== CHATBOT ===================
+# CHATBOT
 @main.route('/api/chatbot', methods=['POST'])
 def chatbot():
     try:
@@ -340,11 +319,10 @@ def chatbot():
             'timestamp': datetime.utcnow().isoformat()
         })
         
-    except Exception as e:
+    except Exception:
         return jsonify({'error': 'Chatbot unavailable'}), 500
 
 def generate_chatbot_response(message):
-    """Generate responses based on common volunteer-related questions"""
     message_lower = message.lower()
     
     if any(word in message_lower for word in ['hello', 'hi', 'hey']):
@@ -371,7 +349,7 @@ def generate_chatbot_response(message):
     else:
         return "I'm here to help with volunteering! You can ask me about events, signing up, creating events, or weather information. What would you like to know?"
 
-# =================== EVENT MANAGEMENT ===================
+# EVENT MANAGEMENT
 @main.route('/events/<int:event_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_event(event_id):
@@ -436,46 +414,3 @@ def delete_event(event_id):
         return redirect(url_for('main.dashboard'))
     else:
         return redirect(url_for('main.events'))
-    
-@main.route('/test-google-oauth')
-def test_google_oauth():
-    """Direct test of Google OAuth URL generation"""
-    from urllib.parse import urlencode
-    import secrets
-    
-    # Clickable link
-    client_id = "329204650680-0rmc3npi3a3kf1o3cocr4n56dd0so8o3.apps.googleusercontent.com"
-    redirect_uri = "https://community-connect-project.onrender.com/auth/google/callback"
-    state = secrets.token_urlsafe(16)
-    
-    params = {
-        'client_id': client_id,
-        'redirect_uri': redirect_uri,
-        'response_type': 'code',
-        'scope': 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid',
-        'access_type': 'offline',
-        'prompt': 'consent',
-        'state': state
-    }
-    
-    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
-    
-    return f"""
-    <html>
-    <head><title>Google OAuth Test</title></head>
-    <body>
-        <h1>Google OAuth Test</h1>
-        <p>This URL should work:</p>
-        <a href="{auth_url}" target="_blank" style="font-size: 14px; word-break: break-all;">
-            {auth_url[:100]}...
-        </a>
-        <br><br>
-        <a href="{auth_url}" target="_blank">
-            <button>Test Google Login</button>
-        </a>
-        <br><br>
-        <p>If this works but /auth/google doesn't, there's an issue in auth.py</p>
-        <p><a href="/auth/google">Test regular auth/google route</a></p>
-    </body>
-    </html>
-    """
