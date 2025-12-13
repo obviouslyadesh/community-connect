@@ -23,7 +23,7 @@ services:
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       
-      # Production URL (MUST match service name above)
+      # Production URL 
       - key: BASE_URL
         value: https://community-connect-project.onrender.com
       
