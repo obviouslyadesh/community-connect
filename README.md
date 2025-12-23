@@ -9,13 +9,13 @@ Role-based system allowing volunteers and organizations to manage events and par
 
 2. Secure Authentication
 
-    -Traditional email/password login
+    - Traditional email/password login
 
-    -Google OAuth 2.0 integration
+    - Google OAuth 2.0 integration
 
-    -Session management using Flask-Login
+    - Session management using Flask-Login
 
-    -Role-based access control (RBAC)
+    - Role-based access control (RBAC)
 
 3. Event Management
 Organizations can create, update, and manage events, while volunteers can register or cancel participation.
