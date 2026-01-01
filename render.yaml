@@ -4,8 +4,8 @@ services:
     env: docker
     plan: free
     region: oregon
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    image: ghcr.io/obviouslyadesh/community-connect:latest
+    autoDeploy: true
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -26,7 +26,6 @@ services:
       - key: FROM_EMAIL
         sync: false
     healthCheckPath: /health
-    autoDeploy: true
 
 databases:
   - name: community-connect-db

@@ -1,4 +1,4 @@
-name: Build, Push, and Deploy
+name: Build, Push to GHCR, and Deploy
 
 on:
   push:
@@ -8,34 +8,25 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: obviouslyadesh/community-connect
 
 jobs:
-  docker-deploy:
+  build-push-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     
     steps:
-    # 1. Get the code 
+    # 1. Get code
     - name: Checkout repository
       uses: actions/checkout@v4
     
-    # 2. Set up Docker builder
+    # 2. Set up Docker
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     
-    # 3. Cache for faster builds 
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-    
-    # 4. Login to GitHub Container Registry
+    # 3. Login to GHCR
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
@@ -43,7 +34,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     
-    # 5. Create smart tags
+    # 4. Extract metadata for tags
     - name: Extract metadata for Docker
       id: meta
       uses: docker/metadata-action@v5
@@ -51,24 +42,29 @@ jobs:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
           type=ref,event=branch
-          type=semver,pattern={{version}}
-          type=sha
+          type=sha,prefix=sha-
     
-    # 6. Build and push image
+    # 5. Build and push to GHCR
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
         context: .
-        push: ${{ github.event_name != 'pull_request' }}
+        push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
     
-    # 7. Trigger Render deployment
+    # 6. Trigger Render deployment (after successful push)
     - name: Trigger Render Deployment
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      env:
+        RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+        RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
       run: |
-        curl -X POST "https://api.render.com/v1/services/srv-d5b4v715pdvs73bad0r0/deploys" \
-          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-          -H "Content-Type: application/json"
+        echo "Triggering deployment for service: $RENDER_SERVICE_ID"
+        curl -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
+          -H "Authorization: Bearer $RENDER_API_KEY" \
+          -H "Content-Type: application/json" \
+          --silent \
+          --fail-with-body
