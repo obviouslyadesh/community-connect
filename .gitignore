@@ -23,3 +23,5 @@ Thumbs.db
 
 *.bak
 *.backup
+init_production_db.py
+init_production_db.py.*
