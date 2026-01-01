@@ -57,7 +57,7 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
     
-    # 6. Trigger Render deployment (after successful push)
+    # 6. Trigger Render deployment
     - name: Trigger Render Deployment
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       env:
