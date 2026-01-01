@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:10000"
+    environment:
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/community_connect
+      - SECRET_KEY=local-development-secret-key-change-this
+    depends_on:
+      - db
+    volumes:
+      - ./app:/app/app
+      - ./config.py:/app/config.py
+      - ./run.py:/app/run.py
+    command: gunicorn --bind 0.0.0.0:10000 --workers 2 --reload run:app
+
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=community_connect
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

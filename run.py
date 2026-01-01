@@ -1,10 +1,23 @@
+# from app import create_app
+# import os
+
+# app = create_app()
+
+# if __name__ == '__main__':
+#     port = int(os.environ.get('PORT', 5001))
+#     print(f"🚀 Starting Flask server on http://localhost:{port}")
+#     print("📢 Press CTRL+C to stop\n")
+#     app.run(host='0.0.0.0', port=port, debug=False)
+
+
 from app import create_app
-import os
 
 app = create_app()
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for Docker/Render"""
+    return {'status': 'healthy', 'service': 'community-connect'}, 200
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5001))
-    print(f"🚀 Starting Flask server on http://localhost:{port}")
-    print("📢 Press CTRL+C to stop\n")
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=5001, debug=False)
