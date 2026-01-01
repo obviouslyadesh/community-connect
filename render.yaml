@@ -1,9 +1,9 @@
 services:
   - type: web
-    name: community-connect-docker
+    name: community-connect-project
     env: docker
-    region: oregon
     plan: free
+    region: oregon
     dockerfilePath: ./Dockerfile
     dockerContext: .
     envVars:
